@@ -1,13 +1,8 @@
 package com.github.destinyd.kcextraimageview;
 
 import android.app.Activity;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.Menu;
-import android.view.View;
 import android.widget.ImageView;
-import uk.co.senab.photoview.PhotoViewAttacher;
 
 public class HelloAndroidActivity extends Activity {
 

@@ -1,18 +1,21 @@
 package com.github.destinyd.kcextraimageview;
 
-import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.PixelFormat;
-import android.graphics.Point;
-import android.graphics.PointF;
+import android.graphics.*;
 import android.util.FloatMath;
 import android.util.Log;
 import android.view.*;
-import uk.co.senab.photoview.PhotoView;
-import uk.co.senab.photoview.PhotoViewAttacher;
+import android.widget.AbsoluteLayout;
+import android.widget.ImageView;
+import com.github.destinyd.kcextraimageview.photoview.IPhotoView;
+import com.github.destinyd.kcextraimageview.photoview.PhotoView;
+import com.github.destinyd.kcextraimageview.photoview.PhotoViewAttacher;
 
 import java.util.ArrayList;
+
+import static android.view.MotionEvent.ACTION_CANCEL;
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_UP;
 
 /**
  * Created by dd on 14-5-6.
@@ -25,6 +28,105 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     private ArrayList<Integer> arrayList = new ArrayList<Integer>();
     private PhotoView mOpenView = null;
 
+
+//    private void setSameAbsoluteLocation(View v1, View v2) {
+//        AbsoluteLayout.LayoutParams alp2 = (AbsoluteLayout.LayoutParams) v2.getLayoutParams();
+//        setAbsoluteLocation(v1, alp2.x, alp2.y);
+//    }
+//
+//
+//    private void setAbsoluteLocationCentered(View v, int x, int y) {
+//        setAbsoluteLocation(v, x - v.getWidth() / 2, y - v.getHeight() / 2);
+//    }
+//
+//
+//    private void setAbsoluteLocation(View v, int x, int y) {
+//        AbsoluteLayout.LayoutParams alp = (AbsoluteLayout.LayoutParams) v.getLayoutParams();
+//        alp.x = x;
+//        alp.y = y;
+//        v.setLayoutParams(alp);
+//    }
+
+
+//    @Override
+//    public boolean onTouch(View view, MotionEvent event) {
+//        boolean handled = false;
+//        if(hasDrawable((ImageView) view)) {
+////            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+////                imageView.setShadowable(true);
+////            }
+//
+//            Log.e(TAG, "event.getX() :" + event.getX());
+//            Log.e(TAG, "event.getY() :" + event.getY());
+//            Log.e(TAG, "view.getX() :" + view.getX());
+//            Log.e(TAG, "view.getY() :" + view.getY());
+//
+//            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+//                ClipData data = ClipData.newPlainText("", "");
+//                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
+//                view.startDrag(data, shadowBuilder, null, 0);
+////                view.setVisibility(View.INVISIBLE);
+//                return true;
+//            } else {
+//                return false;
+//            }
+//
+////            WindowManager.LayoutParams params =
+////                    new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,
+////                            WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.TYPE_APPLICATION,
+////                            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+////                                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,PixelFormat.TRANSLUCENT);
+////
+////            WindowManager windowManager = (WindowManager) imageView.getContext().getSystemService(Context.WINDOW_SERVICE);
+////            ((ViewGroup)imageView.getParent()).removeView(imageView);
+////            windowManager.addView(imageView, params);
+//
+//
+////            ViewParent parent = v.getParent();
+////            switch (event.getAction()) {
+////                case ACTION_DOWN:
+////                    // First, disable the Parent from intercepting the touch
+////                    // event
+////                    if (null != parent)
+////                        parent.requestDisallowInterceptTouchEvent(true);
+////                    else
+////                        Log.i(TAG, "onTouch getParent() returned null");
+////
+////                    // If we're flinging, and the user presses down, cancel
+////                    // fling
+////                    cancelFling();
+////                    break;
+////
+////                case ACTION_CANCEL:
+////                case ACTION_UP:
+////                    // If the user has zoomed less than min scale, zoom back
+////                    // to min scale
+////                    if (getScale() < mMinScale) {
+////                        RectF rect = getDisplayRect();
+////                        if (null != rect) {
+////                            v.post(new AnimatedZoomRunnable(getScale(), mMinScale,
+////                                    rect.centerX(), rect.centerY()));
+////                            handled = true;
+////                        }
+////                    }
+////                    break;
+////            }
+////
+////            // Try the Scale/Drag detector
+////            if (null != mScaleDragDetector
+////                    && mScaleDragDetector.onTouchEvent(event)) {
+////                handled = true;
+////            }
+////
+////            // Check to see if the user double tapped
+////            if (null != mGestureDetector && mGestureDetector.onTouchEvent(event)) {
+////                handled = true;
+////            }
+//        }
+//
+//        return handled;
+//    }
+
     private int mState = 0;
     static final int STATE_NORMAL = 0;
     static final int STATE_LONG_CLICK = 1;
@@ -36,6 +138,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 //        super.setZoomable(false);
 //        super.setOnLongClickListener(this);
         super.setOnPhotoTapListener(this);
+//        imageView.setOnTouchListener(new TouchListener());
 //        super.setOnViewTapListener(this);
     }
 
@@ -49,6 +152,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     public void onPhotoTap(View view, float v, float v2) {
         Log.e(TAG, "onPhotoTap");//图事件
         open();
+//        setRo
     }
 
     private void open() {
@@ -115,9 +219,8 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     }
 
     private void hide_all_view() {
-        if(null !=getRoot()) {
-            for(int i=0; i < getRoot().getChildCount(); i++)
-            {
+        if (null != getRoot()) {
+            for (int i = 0; i < getRoot().getChildCount(); i++) {
                 View view = getRoot().getChildAt(i);
                 arrayList.add(view.getVisibility());
                 view.setVisibility(View.INVISIBLE);
@@ -125,25 +228,31 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         }
     }
 
-    private ViewGroup getRoot(){
-        if(null != mRoot)
+    private ViewGroup getRoot() {
+        if (null != mRoot)
             return mRoot;
         View view = getImageView();
-        if(null != view) {
+        if (null != view) {
             while (null != view.getParent() && !view.getParent().getClass().getName().equals("android.view.ViewRootImpl")) {
                 view = (View) view.getParent();
             }
-            mRoot = (ViewGroup)view;
+            mRoot = (ViewGroup) view;
             return mRoot;
         }
         return null;
+    }
+
+    /**
+     * @return true if the ImageView exists, and it's Drawable existss
+     */
+    private static boolean hasDrawable(ImageView imageView) {
+        return null != imageView && null != imageView.getDrawable();
     }
 
 //    @Override
 //    public void onViewTap(View view, float v, float v2) {
 //        Log.e(TAG, "onViewTap");
 //    }
-
 
 
 //    float x_down = 0;
@@ -323,118 +432,188 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     }
 
 
+
+    private float mMinScale = DEFAULT_MIN_SCALE;
+    private float mMidScale = DEFAULT_MID_SCALE;
+    private float mMaxScale = DEFAULT_MAX_SCALE;
+
+    private PointF startPoint = new PointF();
+    private Matrix matrix = new Matrix();
+    private Matrix currentMatrix = new Matrix();
+    private int mode = 0;
+    private static final int NONE = 0;
+    private static final int DRAG = 1;
+    private static final int ZOOM = 2;
+    private float startDis;// 开始距离
+    private PointF midPoint;// 中间点
+    private double startAngle;// 开始角度
+    private long FLOAT_TIME = 500; // 0.5s
+
+    //    @Override
+//    public boolean onTouch(View v, MotionEvent ev) {
+//        return super.onTouch(v, ev);
+//    }
+//
 //    private final class TouchListener implements View.OnTouchListener {
-//        private PointF startPoint = new PointF();
-//        private Matrix matrix = new Matrix();
-//        private Matrix currentMatrix = new Matrix();
-//        private int mode = 0;
-//        private static final int DRAG = 1;
-//        private static final int ZOOM = 2;
-//        private float startDis;// 开始距离
-//        private PointF midPoint;// 中间点
-//        private double startAngle;// 开始角度
-//
-//        public boolean onTouch(View v, MotionEvent event) {
-//            switch (event.getAction() & MotionEvent.ACTION_MASK) {
-//                case MotionEvent.ACTION_DOWN:// 手指压下屏幕
-//                    Log.e("onTouch", "ACTION_DOWN");
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        boolean handled = false;
+        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN:// 手指压下屏幕
+                Log.e("onTouch", "ACTION_DOWN");
 //                    mode = DRAG;
-//                    currentMatrix.set(getImageView().getImageMatrix());// 记录ImageView当前的移动位置
-//                    startPoint.set(event.getX(), event.getY());
-//                    break;
+                currentMatrix.set(getImageView().getImageMatrix());// 记录ImageView当前的移动位置
+                startPoint.set(event.getX(), event.getY());
+                handled = true;
+                break;
+
+            case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
+//                    Log.e(TAG, "event.getEventTime() - event.getDownTime() : " + (event.getEventTime() - event.getDownTime()));
+                if (mode == NONE) {
+                    if (event.getEventTime() - event.getDownTime() >= FLOAT_TIME) {
+                        Log.e(TAG, "to DRAG");
+                        mode = DRAG;
+                    }
+                }
+                // Log.e("onTouch", "ACTION_MOVE");
+                if (mode == DRAG) {
+//                    super.setZoomable(true); 会update
+                    return super.onTouch(v, event);
+//                    float dx = event.getX() - startPoint.x;// 得到在x轴的移动距离
+//                    float dy = event.getY() - startPoint.y;// 得到在y轴的移动距离
+//                    matrix.set(currentMatrix);// 在没有进行移动之前的位置基础上进行移动
+//                    matrix.postTranslate(dx, dy);
+                } else if (mode == ZOOM) {// 缩放
+                    if(event.getPointerCount() >= 2) {
+                        float endDis = distance(event);// 结束距离
+                        int turnAngel = (int) (angle(event) - startAngle);// 变化的角度
+                        Log.v(TAG, "turnAngel=" + turnAngel);
+                        if (endDis > 10f) {
+                            float scale = endDis / startDis;// 得到缩放倍数
 //
-//                case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
-//                    // Log.e("onTouch", "ACTION_MOVE");
-//                    if (mode == DRAG) {
-//                        float dx = event.getX() - startPoint.x;// 得到在x轴的移动距离
-//                        float dy = event.getY() - startPoint.y;// 得到在y轴的移动距离
-//                        matrix.set(currentMatrix);// 在没有进行移动之前的位置基础上进行移动
-//                        matrix.postTranslate(dx, dy);
-//                    } else if (mode == ZOOM) {// 缩放
-//                        float endDis = distance(event);// 结束距离
-//                        int trunAngel = (int) (angle(event) - startAngle);// 变化的角度
-//                        // Log.v("ACTION_MOVE", "trunAngel="+trunAngel);
-//                        if (endDis > 10f) {
-//                            float scale = endDis / startDis;// 得到缩放倍数
 //                            matrix.set(currentMatrix);
 //                            matrix.postScale(scale, scale, midPoint.x, midPoint.y);
-//                            Log.v("ACTION_MOVE", "imageView.getHeight()="
-//                                    + getImageView().getHeight());
-//                            Log.v("ACTION_MOVE", "imageView.getWidth()="
-//                                    + getImageView().getWidth());
-//                            if (Math.abs(trunAngel) > 5) {
-//                                // 设置变化的角度
-//                                matrix.postRotate(trunAngel, midPoint.x, midPoint.y);
-//                            }
-//
-//                        }
-//                    }
-//                    break;
-//
-//                case MotionEvent.ACTION_UP:// 手指离开屏
-//                    // Log.e("onTouch", "ACTION_UP");
-//                    break;
-//                case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
-//                    // Log.e("onTouch", "ACTION_POINTER_UP");
-//                    mode = 0;
-//                    break;
-//
-//                case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
-//                    // Log.e("onTouch", "ACTION_POINTER_DOWN");
-//                    mode = ZOOM;
-//                    startDis = distance(event);
-//                    startAngle = angle(event);
-//                    if (startDis > 10f) {
-//                        midPoint = mid(event);
-//                        currentMatrix.set(getImageView().getImageMatrix());// 记录ImageView当前的缩放倍数
-//                    }
-//                    break;
-//            }
-//            // Bitmap
-//            // bitmap0=((BitmapDrawable)getResources().getDrawable(R.drawable.test2)).getBitmap();
-//            // LayerDrawable layerDrawable=LayerDrawable.
-//            // Bitmap bitmap=Bitmap.createBitmap(bitmap0, x, y, width, height,
-//            // m, filter)
-//            getImageView().setImageMatrix(matrix);
-//            return true;
-//        }
-//
+                            //放大
+                            setScale(scale, midPoint.x, midPoint.y, true);
+//                        Log.v("ACTION_MOVE", "imageView.getHeight()="
+//                                + getImageView().getHeight());
+//                        Log.v("ACTION_MOVE", "imageView.getWidth()="
+//                                + getImageView().getWidth());
+                            if (Math.abs(turnAngel) > 5) {
+
+                                // 设置变化的角度
+                                setRotationTo(turnAngel);
+//                            update();
+                                // 设置变化的角度
+//                            matrix.postRotate(turnAngel, midPoint.x, midPoint.y);
+                            }
+
+                        }
+                    }
+                }
+                break;
+
+            case MotionEvent.ACTION_UP:// 手指离开屏
+                Log.e("onTouch", "ACTION_UP");
+                mode = NONE;
+
+
+                // If the user has zoomed less than min scale, zoom back
+                // to min scale
+                if (getScale() < mMinScale) {
+                    RectF rect = getDisplayRect();
+                    if (null != rect) {
+                        v.post(new AnimatedZoomRunnable(getScale(), mMinScale,
+                                rect.centerX(), rect.centerY()));
+                        handled = true;
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
+                Log.e(TAG, "ACTION_POINTER_UP");
+                Log.e(TAG, "event.getPointerCount():" + event.getPointerCount());
+                if (event.getPointerCount() == 2) {
+                    Log.e(TAG, "onTouch to DRAG");
+                    mode = DRAG;
+                }
+                else if(event.getPointerCount() <= 1){
+                    Log.e(TAG, "onTouch to NONE");
+                    mode = NONE;
+                }
+                break;
+
+            case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
+                Log.e(TAG, "onTouch ACTION_POINTER_DOWN");
+                if (mode != ZOOM && event.getEventTime() - event.getDownTime() >= FLOAT_TIME) {
+                    Log.e(TAG, "onTouch to ZOOM");
+                    mode = ZOOM;
+                    startDis = distance(event);
+                    startAngle = angle(event);
+                    if (startDis > 10f) {
+                        midPoint = mid(event);
+                        currentMatrix.set(getImageView().getImageMatrix());// 记录ImageView当前的缩放倍数
+                    }
+                }
+                break;
+        }
+//        // Bitmap
+//        // bitmap0=((BitmapDrawable)getResources().getDrawable(R.drawable.test2)).getBitmap();
+//        // LayerDrawable layerDrawable=LayerDrawable.
+//        // Bitmap bitmap=Bitmap.createBitmap(bitmap0, x, y, width, height,
+//        // m, filter)
+//        getImageView().setImageMatrix(matrix);
+
+
+        // Try the Scale/Drag detector
+        if (null != mScaleDragDetector
+                && mScaleDragDetector.onTouchEvent(event)) {
+            handled = true;
+        }
+
+        // Check to see if the user double tapped
+        if (null != mGestureDetector && mGestureDetector.onTouchEvent(event)) {
+            handled = true;
+        }
+
+        return true;
+    }
+
 //    }
-//
-//    /**
-//     * 计算两点之间的距离
-//     *
-//     * @param event
-//     * @return
-//     */
-//    public static float distance(MotionEvent event) {
-//        float dx = event.getX(1) - event.getX(0);
-//        float dy = event.getY(1) - event.getY(0);
-//        return FloatMath.sqrt(dx * dx + dy * dy);
-//    }
-//
-//    /**
-//     * 计算两点之间的中间点
-//     *
-//     * @param event
-//     * @return
-//     */
-//    public static PointF mid(MotionEvent event) {
-//        float midX = (event.getX(1) + event.getX(0)) / 2;
-//        float midY = (event.getY(1) + event.getY(0)) / 2;
-//        return new PointF(midX, midY);
-//    }
-//
-//    /**
-//     * 计算两个手指连线与坐标轴的角度（单位为。C）
-//     *
-//     * @param event
-//     * @return
-//     */
-//    public static double angle(MotionEvent event) {
-//        double delta_x = (event.getX(0) - event.getX(1));
-//        double delta_y = (event.getY(0) - event.getY(1));
-//        double radians = Math.atan2(delta_y, delta_x);
-//        return (float) Math.toDegrees(radians);
-//    }
+
+    /**
+     * 计算两点之间的距离
+     *
+     * @param event
+     * @return
+     */
+    public static float distance(MotionEvent event) {
+        float dx = event.getX(1) - event.getX(0);
+        float dy = event.getY(1) - event.getY(0);
+        return FloatMath.sqrt(dx * dx + dy * dy);
+    }
+
+    /**
+     * 计算两点之间的中间点
+     *
+     * @param event
+     * @return
+     */
+    public static PointF mid(MotionEvent event) {
+        float midX = (event.getX(1) + event.getX(0)) / 2;
+        float midY = (event.getY(1) + event.getY(0)) / 2;
+        return new PointF(midX, midY);
+    }
+
+    /**
+     * 计算两个手指连线与坐标轴的角度（单位为。C）
+     *
+     * @param event
+     * @return
+     */
+    public static double angle(MotionEvent event) {
+        double delta_x = (event.getX(0) - event.getX(1));
+        double delta_y = (event.getY(0) - event.getY(1));
+        double radians = Math.atan2(delta_y, delta_x);
+        return (float) Math.toDegrees(radians);
+    }
 }
