@@ -28,109 +28,13 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     private ArrayList<Integer> arrayList = new ArrayList<Integer>();
     private PhotoView mOpenView = null;
 
-
-//    private void setSameAbsoluteLocation(View v1, View v2) {
-//        AbsoluteLayout.LayoutParams alp2 = (AbsoluteLayout.LayoutParams) v2.getLayoutParams();
-//        setAbsoluteLocation(v1, alp2.x, alp2.y);
-//    }
-//
-//
-//    private void setAbsoluteLocationCentered(View v, int x, int y) {
-//        setAbsoluteLocation(v, x - v.getWidth() / 2, y - v.getHeight() / 2);
-//    }
-//
-//
-//    private void setAbsoluteLocation(View v, int x, int y) {
-//        AbsoluteLayout.LayoutParams alp = (AbsoluteLayout.LayoutParams) v.getLayoutParams();
-//        alp.x = x;
-//        alp.y = y;
-//        v.setLayoutParams(alp);
-//    }
-
-
-//    @Override
-//    public boolean onTouch(View view, MotionEvent event) {
-//        boolean handled = false;
-//        if(hasDrawable((ImageView) view)) {
-////            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-////                imageView.setShadowable(true);
-////            }
-//
-//            Log.e(TAG, "event.getX() :" + event.getX());
-//            Log.e(TAG, "event.getY() :" + event.getY());
-//            Log.e(TAG, "view.getX() :" + view.getX());
-//            Log.e(TAG, "view.getY() :" + view.getY());
-//
-//            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-//                ClipData data = ClipData.newPlainText("", "");
-//                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
-//                view.startDrag(data, shadowBuilder, null, 0);
-////                view.setVisibility(View.INVISIBLE);
-//                return true;
-//            } else {
-//                return false;
-//            }
-//
-////            WindowManager.LayoutParams params =
-////                    new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,
-////                            WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.TYPE_APPLICATION,
-////                            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-////                                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,PixelFormat.TRANSLUCENT);
-////
-////            WindowManager windowManager = (WindowManager) imageView.getContext().getSystemService(Context.WINDOW_SERVICE);
-////            ((ViewGroup)imageView.getParent()).removeView(imageView);
-////            windowManager.addView(imageView, params);
-//
-//
-////            ViewParent parent = v.getParent();
-////            switch (event.getAction()) {
-////                case ACTION_DOWN:
-////                    // First, disable the Parent from intercepting the touch
-////                    // event
-////                    if (null != parent)
-////                        parent.requestDisallowInterceptTouchEvent(true);
-////                    else
-////                        Log.i(TAG, "onTouch getParent() returned null");
-////
-////                    // If we're flinging, and the user presses down, cancel
-////                    // fling
-////                    cancelFling();
-////                    break;
-////
-////                case ACTION_CANCEL:
-////                case ACTION_UP:
-////                    // If the user has zoomed less than min scale, zoom back
-////                    // to min scale
-////                    if (getScale() < mMinScale) {
-////                        RectF rect = getDisplayRect();
-////                        if (null != rect) {
-////                            v.post(new AnimatedZoomRunnable(getScale(), mMinScale,
-////                                    rect.centerX(), rect.centerY()));
-////                            handled = true;
-////                        }
-////                    }
-////                    break;
-////            }
-////
-////            // Try the Scale/Drag detector
-////            if (null != mScaleDragDetector
-////                    && mScaleDragDetector.onTouchEvent(event)) {
-////                handled = true;
-////            }
-////
-////            // Check to see if the user double tapped
-////            if (null != mGestureDetector && mGestureDetector.onTouchEvent(event)) {
-////                handled = true;
-////            }
-//        }
-//
-//        return handled;
-//    }
-
     private int mState = 0;
     static final int STATE_NORMAL = 0;
     static final int STATE_LONG_CLICK = 1;
     static final int STATE_OPEN = 2;
+    WindowManager windowManager;
+    ViewGroup.LayoutParams layoutParamsImageView;
+    ViewGroup viewParent;
 
     public KCExtraImageViewAttacher(KCExtraImageView imageView) {
         super(imageView);
@@ -140,6 +44,10 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         super.setOnPhotoTapListener(this);
 //        imageView.setOnTouchListener(new TouchListener());
 //        super.setOnViewTapListener(this);
+
+        windowManager = (WindowManager) getImageView().getContext().getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+        layoutParamsImageView = imageView.getLayoutParams();
+        viewParent = (ViewGroup)imageView.getParent();
     }
 
 //    @Override
@@ -196,7 +104,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
          * LayoutParams.FLAG_NOT_FOCUSABLE | LayoutParams.FLAG_NOT_TOUCHABLE;
          */
 
-        wmParams.gravity = Gravity.LEFT | Gravity.TOP; // 调整悬浮窗口至左上角
+        wmParams.gravity = Gravity.CENTER;
 //      wmParams.gravity = Gravity.CENTER_VERTICAL | Gravity.RIGHT; // 调整悬浮窗口至左上角
         //设置默认显示位置
 //      wmParams.x = 0;<span style="font-family: Arial, Helvetica, sans-serif;">// 以屏幕左上角为原点，设置x、y初始值</span>
@@ -211,6 +119,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     private void close_full_screen() {
 //        resume_all_view();
         close_open_image_view();
+        mState = STATE_NORMAL;
     }
 
     private void close_open_image_view() {
@@ -468,11 +377,13 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                 break;
 
             case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
+                Log.e(TAG, "ACTION_MOVE");
 //                    Log.e(TAG, "event.getEventTime() - event.getDownTime() : " + (event.getEventTime() - event.getDownTime()));
                 if (mode == NONE) {
                     if (event.getEventTime() - event.getDownTime() >= FLOAT_TIME) {
                         Log.e(TAG, "to DRAG");
                         mode = DRAG;
+                        to_window(event);
                     }
                 }
                 // Log.e("onTouch", "ACTION_MOVE");
@@ -513,9 +424,14 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                 }
                 break;
 
+            case MotionEvent.ACTION_CANCEL:
+                Log.e("onTouch", "ACTION_CANCEL");
+//                remove_from_window();
+                break;
             case MotionEvent.ACTION_UP:// 手指离开屏
                 Log.e("onTouch", "ACTION_UP");
                 mode = NONE;
+//                remove_from_window();
 
 
                 // If the user has zoomed less than min scale, zoom back
@@ -555,6 +471,22 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                     }
                 }
                 break;
+
+            case MotionEvent.ACTION_OUTSIDE:
+                Log.e(TAG, "ACTION_OUTSIDE");
+                break;
+
+            case MotionEvent.ACTION_HOVER_EXIT:
+            case MotionEvent.ACTION_HOVER_MOVE:
+            case MotionEvent.ACTION_HOVER_ENTER:
+                Log.e(TAG, "ACTION_HOVER");
+                break;
+
+            case MotionEvent.ACTION_MASK:
+            case MotionEvent.ACTION_POINTER_INDEX_MASK:
+            case MotionEvent.ACTION_SCROLL:
+                Log.e(TAG, "ACTION_OTHER");
+                break;
         }
 //        // Bitmap
 //        // bitmap0=((BitmapDrawable)getResources().getDrawable(R.drawable.test2)).getBitmap();
@@ -576,6 +508,53 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         }
 
         return true;
+    }
+
+    private void remove_from_window() {
+        windowManager.removeView(imageView);
+        viewParent.addView(imageView, layoutParamsImageView);
+    }
+
+    private void to_window(MotionEvent event) {
+//        mOpenView = new PhotoView(imageView.getContext());
+//        mOpenView.setBackgroundColor(Color.BLACK);
+//        mOpenView.setImageDrawable(imageView.getDrawable());
+//        mOpenView.setOnViewTapListener(new OnViewTapListener() {
+//            @Override
+//            public void onViewTap(View view, float v, float v2) {
+//                close_full_screen();
+//            }
+//        });
+
+        WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+        wmParams.format = PixelFormat.RGBA_8888; // 设置图片格式，效果为背景透明
+        // 设置Window flag
+        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+
+        wmParams.gravity = Gravity.LEFT | Gravity.TOP; // 调整悬浮窗口至左上角
+//      wmParams.gravity = Gravity.CENTER_VERTICAL | Gravity.RIGHT; // 调整悬浮窗口至左上角
+        //设置默认显示位置
+//      wmParams.x = 0;<span style="font-family: Arial, Helvetica, sans-serif;">// 以屏幕左上角为原点，设置x、y初始值</span>
+//      wmParams.y = 0;
+//        wmParams.x = windowSize.x;// 以屏幕右边， 距中
+//                wmParams.y = windowSize.y / 2;
+
+        int[] location = new int[2] ;
+//        imageView.getLocationInWindow(location); //获取在当前窗口内的绝对坐标
+        imageView.getLocationOnScreen(location);//获取在整个屏幕内的绝对坐标
+
+        wmParams.x = location[0];
+        wmParams.y = location[1];
+        Log.e(TAG, "location[0]:" + location[0]);
+        Log.e(TAG, "location[1]:" + location[1]);
+
+//        wmParams.x = (int)imageView.getX();
+//        wmParams.y = (int)imageView.getY();
+
+        ((ViewGroup)imageView.getParent()).removeView(imageView);
+        windowManager.addView(imageView, wmParams);
+        imageView.onTouchEvent(event);
     }
 
 //    }

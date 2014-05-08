@@ -142,4 +142,64 @@ public class KCExtraImageView extends PhotoView {
 //            Log.e(TAG, "mH - 5:" + (mH - 5));
 //        }
 //    }
+
+//    public final boolean startDrag(ClipData data, DragShadowBuilder shadowBuilder,
+//                                           Object myLocalState, int flags) {
+//        if (ViewDebug.DEBUG_DRAG) {
+//            Log.d(VIEW_LOG_TAG, "startDrag: data=" + data + " flags=" + flags);
+//        }
+//        boolean okay = false;
+//
+//        Point shadowSize = new Point();
+//        Point shadowTouchPoint = new Point();
+//        shadowBuilder.onProvideShadowMetrics(shadowSize, shadowTouchPoint);
+//
+//        if ((shadowSize.x < 0) || (shadowSize.y < 0) ||
+//                (shadowTouchPoint.x < 0) || (shadowTouchPoint.y < 0)) {
+//            throw new IllegalStateException("Drag shadow dimensions must not be negative");
+//        }
+//
+//        if (ViewDebug.DEBUG_DRAG) {
+//            Log.d(VIEW_LOG_TAG, "drag shadow: width=" + shadowSize.x + " height=" + shadowSize.y
+//                    + " shadowX=" + shadowTouchPoint.x + " shadowY=" + shadowTouchPoint.y);
+//        }
+//        Surface surface = new Surface();
+//        try {
+//            IBinder token = mAttachInfo.mSession.prepareDrag(mAttachInfo.mWindow,
+//                    flags, shadowSize.x, shadowSize.y, surface);
+//            if (ViewDebug.DEBUG_DRAG) Log.d(VIEW_LOG_TAG, "prepareDrag returned token=" + token
+//                    + " surface=" + surface);
+//            if (token != null) {
+//                Canvas canvas = surface.lockCanvas(null);
+//                try {
+//                    canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+//                    shadowBuilder.onDrawShadow(canvas);
+//                } finally {
+//                    surface.unlockCanvasAndPost(canvas);
+//                }
+//
+//                final ViewRootImpl root = getViewRootImpl();
+//
+//                // Cache the local state object for delivery with DragEvents
+//                root.setLocalDragState(myLocalState);
+//
+//                // repurpose 'shadowSize' for the last touch point
+//                root.getLastTouchPoint(shadowSize);
+//
+//                okay = mAttachInfo.mSession.performDrag(mAttachInfo.mWindow, token,
+//                        shadowSize.x, shadowSize.y,
+//                        shadowTouchPoint.x, shadowTouchPoint.y, data);
+//                if (ViewDebug.DEBUG_DRAG) Log.d(VIEW_LOG_TAG, "performDrag returned " + okay);
+//
+//                // Off and running!  Release our local surface instance; the drag
+//                // shadow surface is now managed by the system process.
+//                surface.release();
+//            }
+//        } catch (Exception e) {
+//            Log.e(VIEW_LOG_TAG, "Unable to initiate drag", e);
+//            surface.destroy();
+//        }
+//
+//        return okay;
+//    }
 }
