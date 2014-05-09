@@ -1,7 +1,12 @@
 package com.github.destinyd.kcextraimageview;
 
+import android.annotation.TargetApi;
+import android.content.ClipData;
 import android.content.Context;
 import android.graphics.*;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.FloatMath;
 import android.util.Log;
 import android.view.*;
@@ -377,7 +382,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                 break;
 
             case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
-                Log.e(TAG, "ACTION_MOVE");
+//                Log.e(TAG, "ACTION_MOVE");
 //                    Log.e(TAG, "event.getEventTime() - event.getDownTime() : " + (event.getEventTime() - event.getDownTime()));
                 if (mode == NONE) {
                     if (event.getEventTime() - event.getDownTime() >= FLOAT_TIME) {
@@ -388,12 +393,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                 }
                 // Log.e("onTouch", "ACTION_MOVE");
                 if (mode == DRAG) {
-//                    super.setZoomable(true); 会update
                     return super.onTouch(v, event);
-//                    float dx = event.getX() - startPoint.x;// 得到在x轴的移动距离
-//                    float dy = event.getY() - startPoint.y;// 得到在y轴的移动距离
-//                    matrix.set(currentMatrix);// 在没有进行移动之前的位置基础上进行移动
-//                    matrix.postTranslate(dx, dy);
                 } else if (mode == ZOOM) {// 缩放
                     if(event.getPointerCount() >= 2) {
                         float endDis = distance(event);// 结束距离
@@ -516,45 +516,10 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     }
 
     private void to_window(MotionEvent event) {
-//        mOpenView = new PhotoView(imageView.getContext());
-//        mOpenView.setBackgroundColor(Color.BLACK);
-//        mOpenView.setImageDrawable(imageView.getDrawable());
-//        mOpenView.setOnViewTapListener(new OnViewTapListener() {
-//            @Override
-//            public void onViewTap(View view, float v, float v2) {
-//                close_full_screen();
-//            }
-//        });
-
-        WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-        wmParams.format = PixelFormat.RGBA_8888; // 设置图片格式，效果为背景透明
-        // 设置Window flag
-        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-
-        wmParams.gravity = Gravity.LEFT | Gravity.TOP; // 调整悬浮窗口至左上角
-//      wmParams.gravity = Gravity.CENTER_VERTICAL | Gravity.RIGHT; // 调整悬浮窗口至左上角
-        //设置默认显示位置
-//      wmParams.x = 0;<span style="font-family: Arial, Helvetica, sans-serif;">// 以屏幕左上角为原点，设置x、y初始值</span>
-//      wmParams.y = 0;
-//        wmParams.x = windowSize.x;// 以屏幕右边， 距中
-//                wmParams.y = windowSize.y / 2;
-
-        int[] location = new int[2] ;
-//        imageView.getLocationInWindow(location); //获取在当前窗口内的绝对坐标
-        imageView.getLocationOnScreen(location);//获取在整个屏幕内的绝对坐标
-
-        wmParams.x = location[0];
-        wmParams.y = location[1];
-        Log.e(TAG, "location[0]:" + location[0]);
-        Log.e(TAG, "location[1]:" + location[1]);
-
-//        wmParams.x = (int)imageView.getX();
-//        wmParams.y = (int)imageView.getY();
-
-        ((ViewGroup)imageView.getParent()).removeView(imageView);
-        windowManager.addView(imageView, wmParams);
-        imageView.onTouchEvent(event);
+        ClipData data = ClipData.newPlainText("", "");
+        MyDragShadowBuilder shadowBuilder = new MyDragShadowBuilder(imageView);
+        imageView.startDrag(data, shadowBuilder, null, 0);
+        imageView.setVisibility(View.INVISIBLE);
     }
 
 //    }
@@ -594,5 +559,67 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         double delta_y = (event.getY(0) - event.getY(1));
         double radians = Math.atan2(delta_y, delta_x);
         return (float) Math.toDegrees(radians);
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public class MyDragShadowBuilder extends View.DragShadowBuilder{
+        KCExtraImageView mView;
+        private final Drawable shadow;
+        private int width, height;
+        final int paddingLeft, paddingTop;
+        public MyDragShadowBuilder(View view) {
+            super(view);
+            shadow = new ColorDrawable(Color.parseColor("#ffff0000"));
+            mView = (KCExtraImageView)view;
+            paddingLeft = mView.getPaddingLeft();
+            paddingTop = mView.getPaddingTop();
+            mView.getRootView().setOnDragListener(new OnDragListener());
+        }
+
+        @Override
+        public void onProvideShadowMetrics(Point shadowSize, Point shadowTouchPoint) {
+            int width = getView().getWidth();
+            int height = getView().getHeight();
+
+            shadowSize.set(width + 5, height + 5);
+
+            shadowTouchPoint.set(width / 2, height / 2);
+//            super.onProvideShadowMetrics(shadowSize, shadowTouchPoint);
+        }
+
+        @Override
+        public void onDrawShadow(Canvas canvas) {
+            // Set Drag image background or anything you want
+//            int width = getView().getWidth();
+//            int height = getView().getHeight();
+            Paint paint = new Paint();
+            paint.setColor(0x55858585);
+//            Matrix matrix1 = imageView.getMatrix();
+//            float[] values = new float[256];
+//            matrix1.getValues(values);
+            RectF rect = mView.getDisplayRect();
+            rect.top += paddingTop + 5f;
+            rect.left += paddingLeft + 3f;
+            rect.bottom += paddingTop + 5f;
+            rect.right += paddingLeft + 3f;
+
+            canvas.drawRect(rect, paint);
+
+            super.onDrawShadow(canvas);
+        }
+    }
+
+    public class OnDragListener implements View.OnDragListener {
+
+        @Override
+        public boolean onDrag(View v, DragEvent event) {
+            switch (event.getAction()) {
+                case DragEvent.ACTION_DRAG_ENDED:
+                    imageView.setVisibility(View.VISIBLE);
+                    imageView.setOnDragListener(null);
+                    break;
+            }
+            return false;
+        }
     }
 }
