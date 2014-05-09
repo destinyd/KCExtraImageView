@@ -516,6 +516,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     }
 
     private void to_window(MotionEvent event) {
+        getRoot().setOnDragListener(new OnDragListener());
         ClipData data = ClipData.newPlainText("", "");
         MyDragShadowBuilder shadowBuilder = new MyDragShadowBuilder(imageView);
         imageView.startDrag(data, shadowBuilder, null, 0);
@@ -563,6 +564,8 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public class MyDragShadowBuilder extends View.DragShadowBuilder{
+        public static final float SHADOW_BOTTOM_SIZE = 10f;
+        public static final float SHADOW_RIGHT_SIZE = 5f;
         KCExtraImageView mView;
         private final Drawable shadow;
         private int width, height;
@@ -573,7 +576,6 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
             mView = (KCExtraImageView)view;
             paddingLeft = mView.getPaddingLeft();
             paddingTop = mView.getPaddingTop();
-            mView.getRootView().setOnDragListener(new OnDragListener());
         }
 
         @Override
@@ -598,10 +600,10 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 //            float[] values = new float[256];
 //            matrix1.getValues(values);
             RectF rect = mView.getDisplayRect();
-            rect.top += paddingTop + 5f;
-            rect.left += paddingLeft + 3f;
-            rect.bottom += paddingTop + 5f;
-            rect.right += paddingLeft + 3f;
+            rect.top += paddingTop + SHADOW_BOTTOM_SIZE;
+            rect.left += paddingLeft + SHADOW_RIGHT_SIZE;
+            rect.bottom += paddingTop + SHADOW_BOTTOM_SIZE;
+            rect.right += paddingLeft + SHADOW_RIGHT_SIZE;
 
             canvas.drawRect(rect, paint);
 
@@ -616,7 +618,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
             switch (event.getAction()) {
                 case DragEvent.ACTION_DRAG_ENDED:
                     imageView.setVisibility(View.VISIBLE);
-                    imageView.setOnDragListener(null);
+                    imageView.getRootView().setOnDragListener(null);
                     break;
             }
             return false;
