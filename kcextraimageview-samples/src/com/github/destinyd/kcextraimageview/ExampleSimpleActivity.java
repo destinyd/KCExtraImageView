@@ -4,11 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.ImageView;
 
-public class HelloAndroidActivity extends Activity {
-
-    private static final String TAG = "HelloAndroidActivity";
-    ImageView iv_image;
-    KCExtraImageViewAttacher mAttacher;
+public class ExampleSimpleActivity extends Activity {
 
     /**
      * Called when the activity is first created.
@@ -19,14 +15,7 @@ public class HelloAndroidActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        iv_image = (ImageView) findViewById(R.id.iv_image);
-
-//        Drawable bitmap = getResources().getDrawable(R.drawable.test);
-//        iv_image.setImageDrawable(bitmap);
-//
-//        // Attach a PhotoViewAttacher, which takes care of all of the zooming functionality.
-//        mAttacher = new KCExtraImageViewAttacher(iv_image);
+        setContentView(R.layout.example_simple);
 
     }
 }

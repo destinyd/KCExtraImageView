@@ -7,7 +7,12 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 import com.github.destinyd.kcextraimageview.photoview.PhotoView;
+import com.github.destinyd.kcextraimageview.photoview.PhotoViewAttacher;
+
+import static android.view.MotionEvent.ACTION_CANCEL;
 
 /**
  * Created by dd on 14-5-6.
@@ -22,7 +27,7 @@ public class KCExtraImageView extends PhotoView {
     private boolean isShadowable = false;
 
 
-//    private Rect mRect;
+    //    private Rect mRect;
     private Paint mPaint;
 
     public KCExtraImageView(Context context) {
@@ -57,9 +62,9 @@ public class KCExtraImageView extends PhotoView {
         this.isShadowable = isShadowable;
     }
 
-    public static Bitmap drawableToBitmap (Drawable drawable) {
+    public static Bitmap drawableToBitmap(Drawable drawable) {
         if (drawable instanceof BitmapDrawable) {
-            return ((BitmapDrawable)drawable).getBitmap();
+            return ((BitmapDrawable) drawable).getBitmap();
         }
 
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
@@ -92,7 +97,7 @@ public class KCExtraImageView extends PhotoView {
 
     private static Bitmap getDropShadow3(Bitmap bitmap) {
 
-        if (bitmap==null) return null;
+        if (bitmap == null) return null;
         int think = 6;
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
@@ -115,12 +120,12 @@ public class KCExtraImageView extends PhotoView {
         // Bottom
         Shader bshader = new LinearGradient(0, newH, 0, h, Color.GRAY, Color.LTGRAY, Shader.TileMode.CLAMP);
         paint.setShader(bshader);
-        c.drawRect(think, newH, newW  , h, paint);
+        c.drawRect(think, newH, newW, h, paint);
 
         //Corner
         Shader cchader = new LinearGradient(0, newH, 0, h, Color.LTGRAY, Color.LTGRAY, Shader.TileMode.CLAMP);
         paint.setShader(cchader);
-        c.drawRect(newW, newH, w  , h, paint);
+        c.drawRect(newW, newH, w, h, paint);
 
 
         c.drawBitmap(sbmp, 0, 0, null);

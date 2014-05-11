@@ -1,7 +1,6 @@
 package com.github.destinyd.kcextraimageview;
 
 import android.annotation.TargetApi;
-import android.content.ClipData;
 import android.content.Context;
 import android.graphics.*;
 import android.graphics.drawable.ColorDrawable;
@@ -11,16 +10,15 @@ import android.util.FloatMath;
 import android.util.Log;
 import android.view.*;
 import android.widget.AbsoluteLayout;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
-import com.github.destinyd.kcextraimageview.photoview.IPhotoView;
+import android.widget.RelativeLayout;
 import com.github.destinyd.kcextraimageview.photoview.PhotoView;
 import com.github.destinyd.kcextraimageview.photoview.PhotoViewAttacher;
 
 import java.util.ArrayList;
 
 import static android.view.MotionEvent.ACTION_CANCEL;
-import static android.view.MotionEvent.ACTION_DOWN;
-import static android.view.MotionEvent.ACTION_UP;
 
 /**
  * Created by dd on 14-5-6.
@@ -52,14 +50,8 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 
         windowManager = (WindowManager) getImageView().getContext().getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         layoutParamsImageView = imageView.getLayoutParams();
-        viewParent = (ViewGroup)imageView.getParent();
+        viewParent = (ViewGroup) imageView.getParent();
     }
-
-//    @Override
-//    public boolean onLongClick(View v) {
-//        Log.e(TAG, "onLongClick");
-//        return false;
-//    }
 
     @Override
     public void onPhotoTap(View view, float v, float v2) {
@@ -147,7 +139,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
             return mRoot;
         View view = getImageView();
         if (null != view) {
-            while (null != view.getParent() && !view.getParent().getClass().getName().equals("android.view.ViewRootImpl")) {
+            while (null != view.getParent() && isNotViewRootImpl(view)) {
                 view = (View) view.getParent();
             }
             mRoot = (ViewGroup) view;
@@ -156,204 +148,17 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         return null;
     }
 
-    /**
-     * @return true if the ImageView exists, and it's Drawable existss
-     */
-    private static boolean hasDrawable(ImageView imageView) {
-        return null != imageView && null != imageView.getDrawable();
+    private boolean isNotViewRootImpl(View view) {
+        return !view.getParent().getClass().getName().equals("android.view.ViewRootImpl");
     }
-
-//    @Override
-//    public void onViewTap(View view, float v, float v2) {
-//        Log.e(TAG, "onViewTap");
-//    }
-
-
-//    float x_down = 0;
-//    float y_down = 0;
-//    PointF start = new PointF();
-//    PointF mid = new PointF();
-//    float oldDist = 1f;
-//    float oldRotation = 0;
-//    Matrix matrix = new Matrix();
-//    Matrix matrix1 = new Matrix();
-//    Matrix savedMatrix = new Matrix();
-//
-//    private static final int NONE = 0;
-//    private static final int DRAG = 1;
-//    private static final int ZOOM = 2;
-//    int mode = NONE;
-//
-//    boolean matrixCheck = false;
-//
-//    int widthScreen;
-//    int heightScreen;
-//
-//    Bitmap gintama;
-//
-//    public boolean onTouchEvent(MotionEvent event) {
-//        switch (event.getAction() & MotionEvent.ACTION_MASK) {
-//            case MotionEvent.ACTION_DOWN:
-//                mode = DRAG;
-//                x_down = event.getX();
-//                y_down = event.getY();
-//                savedMatrix.set(matrix);
-//                break;
-//            case MotionEvent.ACTION_POINTER_DOWN:
-//                mode = ZOOM;
-//                oldDist = spacing(event);
-//                oldRotation = rotation(event);
-//                savedMatrix.set(matrix);
-//                midPoint(mid, event);
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-//                if (mode == ZOOM) {
-//                    matrix1.set(savedMatrix);
-//                    float rotation = rotation(event) - oldRotation;
-//                    float newDist = spacing(event);
-//                    float scale = newDist / oldDist;
-//                    matrix1.postScale(scale, scale, mid.x, mid.y);// 縮放
-//                    matrix1.postRotate(rotation, mid.x, mid.y);// 旋轉
-//                    matrixCheck = matrixCheck();
-//                    if (matrixCheck == false) {
-//                        matrix.set(matrix1);
-//                        invalidate();
-//                    }
-//                } else if (mode == DRAG) {
-//                    matrix1.set(savedMatrix);
-//                    matrix1.postTranslate(event.getX() - x_down, event.getY()
-//                            - y_down);// 平移
-//                    matrixCheck = matrixCheck();
-//                    matrixCheck = matrixCheck();
-//                    if (matrixCheck == false) {
-//                        matrix.set(matrix1);
-//                        invalidate();
-//                    }
-//                }
-//                break;
-//            case MotionEvent.ACTION_UP:
-//            case MotionEvent.ACTION_POINTER_UP:
-//                mode = NONE;
-//                break;
-//        }
-//        return true;
-//    }
-//
-//
-//    private boolean matrixCheck() {
-//        float[] f = new float[9];
-//        matrix1.getValues(f);
-//        // 图片4个顶点的坐标
-//        float x1 = f[0] * 0 + f[1] * 0 + f[2];
-//        float y1 = f[3] * 0 + f[4] * 0 + f[5];
-//        float x2 = f[0] * gintama.getWidth() + f[1] * 0 + f[2];
-//        float y2 = f[3] * gintama.getWidth() + f[4] * 0 + f[5];
-//        float x3 = f[0] * 0 + f[1] * gintama.getHeight() + f[2];
-//        float y3 = f[3] * 0 + f[4] * gintama.getHeight() + f[5];
-//        float x4 = f[0] * gintama.getWidth() + f[1] * gintama.getHeight() + f[2];
-//        float y4 = f[3] * gintama.getWidth() + f[4] * gintama.getHeight() + f[5];
-//        // 图片现宽度
-//        double width = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-//        // 缩放比率判断
-//        if (width < widthScreen / 3 || width > widthScreen * 3) {
-//            return true;
-//        }
-//        // 出界判断
-//        if ((x1 < widthScreen / 3 && x2 < widthScreen / 3
-//                && x3 < widthScreen / 3 && x4 < widthScreen / 3)
-//                || (x1 > widthScreen * 2 / 3 && x2 > widthScreen * 2 / 3
-//                && x3 > widthScreen * 2 / 3 && x4 > widthScreen * 2 / 3)
-//                || (y1 < heightScreen / 3 && y2 < heightScreen / 3
-//                && y3 < heightScreen / 3 && y4 < heightScreen / 3)
-//                || (y1 > heightScreen * 2 / 3 && y2 > heightScreen * 2 / 3
-//                && y3 > heightScreen * 2 / 3 && y4 > heightScreen * 2 / 3)) {
-//            return true;
-//        }
-//        return false;
-//    }
-
-//
-//    @Override
-//    public boolean onTouch(View v, MotionEvent ev) {
-//        boolean handled = false;
-//
-//        if (mZoomEnabled && hasDrawable((ImageView) v)) {
-//            ViewParent parent = v.getParent();
-//            switch (ev.getAction()) {
-//                case ACTION_DOWN:
-//                    // First, disable the Parent from intercepting the touch
-//                    // event
-//                    if (null != parent)
-//                        parent.requestDisallowInterceptTouchEvent(true);
-//                    else
-//                        Log.i(LOG_TAG, "onTouch getParent() returned null");
-//
-//                    // If we're flinging, and the user presses down, cancel
-//                    // fling
-//                    cancelFling();
-//                    break;
-//
-//                case ACTION_CANCEL:
-//                case ACTION_UP:
-//                    // If the user has zoomed less than min scale, zoom back
-//                    // to min scale
-//                    if (getScale() < mMinScale) {
-//                        RectF rect = getDisplayRect();
-//                        if (null != rect) {
-//                            v.post(new AnimatedZoomRunnable(getScale(), mMinScale,
-//                                    rect.centerX(), rect.centerY()));
-//                            handled = true;
-//                        }
-//                    }
-//                    break;
-//            }
-//
-//            // Try the Scale/Drag detector
-//            if (null != mScaleDragDetector
-//                    && mScaleDragDetector.onTouchEvent(ev)) {
-//                handled = true;
-//            }
-//
-//            // Check to see if the user double tapped
-//            if (null != mGestureDetector && mGestureDetector.onTouchEvent(ev)) {
-//                handled = true;
-//            }
-//        }
-//
-//        return handled;
-//    }
-
-    // 触碰两点间距离
-    private float spacing(MotionEvent event) {
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return FloatMath.sqrt(x * x + y * y);
-    }
-
-    // 取手势中心点
-    private void midPoint(PointF point, MotionEvent event) {
-        float x = event.getX(0) + event.getX(1);
-        float y = event.getY(0) + event.getY(1);
-        point.set(x / 2, y / 2);
-    }
-
-    // 取旋转角度
-    private float rotation(MotionEvent event) {
-        double delta_x = (event.getX(0) - event.getX(1));
-        double delta_y = (event.getY(0) - event.getY(1));
-        double radians = Math.atan2(delta_y, delta_x);
-        return (float) Math.toDegrees(radians);
-    }
-
-
 
     private float mMinScale = DEFAULT_MIN_SCALE;
     private float mMidScale = DEFAULT_MID_SCALE;
     private float mMaxScale = DEFAULT_MAX_SCALE;
 
-    private PointF startPoint = new PointF();
+    protected PointF startPoint = new PointF();
     private Matrix matrix = new Matrix();
-    private Matrix currentMatrix = new Matrix();
+    protected Matrix currentMatrix = new Matrix();
     private int mode = 0;
     private static final int NONE = 0;
     private static final int DRAG = 1;
@@ -363,18 +168,19 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     private double startAngle;// 开始角度
     private long FLOAT_TIME = 500; // 0.5s
 
-    //    @Override
-//    public boolean onTouch(View v, MotionEvent ev) {
-//        return super.onTouch(v, ev);
-//    }
-//
-//    private final class TouchListener implements View.OnTouchListener {
+    private MotionEvent lastEvent;
+
+    public MotionEvent getLastEvent() {
+        return lastEvent;
+    }
+
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         boolean handled = false;
+        lastEvent = event;
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:// 手指压下屏幕
-                Log.e("onTouch", "ACTION_DOWN");
+                Log.e(TAG, "normal ACTION_DOWN");
 //                    mode = DRAG;
                 currentMatrix.set(getImageView().getImageMatrix());// 记录ImageView当前的移动位置
                 startPoint.set(event.getX(), event.getY());
@@ -386,19 +192,23 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 //                    Log.e(TAG, "event.getEventTime() - event.getDownTime() : " + (event.getEventTime() - event.getDownTime()));
                 if (mode == NONE) {
                     if (event.getEventTime() - event.getDownTime() >= FLOAT_TIME) {
-                        Log.e(TAG, "to DRAG");
+                        Log.e(TAG, "normal to DRAG");
                         mode = DRAG;
                         to_window(event);
+                        imageView.setZoomable(true);
                     }
                 }
                 // Log.e("onTouch", "ACTION_MOVE");
                 if (mode == DRAG) {
                     return super.onTouch(v, event);
                 } else if (mode == ZOOM) {// 缩放
-                    if(event.getPointerCount() >= 2) {
+                    if (event.getPointerCount() >= 2) {
                         float endDis = distance(event);// 结束距离
                         int turnAngel = (int) (angle(event) - startAngle);// 变化的角度
-                        Log.v(TAG, "turnAngel=" + turnAngel);
+//                        if(imageView.imageViewFrom != null)
+//                            Log.v(TAG, "imageViewFrom turnAngel=" + turnAngel);
+//                        else
+//                            Log.e(TAG, "null turnAngel=" + turnAngel);
                         if (endDis > 10f) {
                             float scale = endDis / startDis;// 得到缩放倍数
 //
@@ -426,11 +236,15 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 
             case MotionEvent.ACTION_CANCEL:
                 Log.e("onTouch", "ACTION_CANCEL");
-//                remove_from_window();
+//                remove、invisiable触发
+//                int action = event.getAction();
+//                event.setAction( action &= ~ACTION_CANCEL);
+//                return true;
                 break;
             case MotionEvent.ACTION_UP:// 手指离开屏
                 Log.e("onTouch", "ACTION_UP");
                 mode = NONE;
+                from_window();
 //                remove_from_window();
 
 
@@ -447,12 +261,11 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                 break;
             case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
                 Log.e(TAG, "ACTION_POINTER_UP");
-                Log.e(TAG, "event.getPointerCount():" + event.getPointerCount());
+//                Log.e(TAG, "event.getPointerCount():" + event.getPointerCount());
                 if (event.getPointerCount() == 2) {
                     Log.e(TAG, "onTouch to DRAG");
                     mode = DRAG;
-                }
-                else if(event.getPointerCount() <= 1){
+                } else if (event.getPointerCount() <= 1) {
                     Log.e(TAG, "onTouch to NONE");
                     mode = NONE;
                 }
@@ -510,17 +323,68 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         return true;
     }
 
+    private void from_window() {
+        anime_to_original();
+        //必须动画走完再设置回原始，否则会出直接变当前比例原始图BUG
+        to_original_layout_params();
+    }
+
+    private void anime_to_original() {
+        imageView.setScale(1, true);
+    }
+
+    private void to_original_layout_params() {
+        imageView.setLayoutParams(layoutParamsImageView);
+    }
+
     private void remove_from_window() {
         windowManager.removeView(imageView);
         viewParent.addView(imageView, layoutParamsImageView);
     }
 
+    KCExtraImageView topImageView;
+
     private void to_window(MotionEvent event) {
-        getRoot().setOnDragListener(new OnDragListener());
-        ClipData data = ClipData.newPlainText("", "");
-        MyDragShadowBuilder shadowBuilder = new MyDragShadowBuilder(imageView);
-        imageView.startDrag(data, shadowBuilder, null, 0);
-        imageView.setVisibility(View.INVISIBLE);
+        Log.e(TAG, "to_window");
+        mState = STATE_LONG_CLICK;
+        set_this_view_to_topest();
+
+
+        layoutParamsImageView = imageView.getLayoutParams();
+        String strClass = imageView.getParent().getClass().getName();
+        if (strClass.equals("android.widget.RelativeLayout")) {
+            imageView.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        } else if (strClass.equals("android.widget.FrameLayout")) {
+            imageView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        } else {
+            imageView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+
+//        getRoot().bringChildToFront(imageView);
+//        topImageView = new KCExtraImageView(imageView.getContext());
+//        topImageView.setImageDrawable(imageView.getDrawable());
+//        topImageView.setImageViewFrom(imageView);
+//        imageView.setImageViewTo(topImageView);
+////        imageView.setOnTouchListener(new TopOnTouchListener());
+//        topImageView.setOnTouchListener(new TopOnTouchListener());
+//        imageView.setVisibility(View.INVISIBLE);
+//        getRoot().addView(topImageView, getRoot().getChildCount(), new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+////        getRoot().setOnDragListener(new OnDragListener());
+////        ClipData data = ClipData.newPlainText("", "");
+////        MyDragShadowBuilder shadowBuilder = new MyDragShadowBuilder(imageView);
+////        imageView.startDrag(data, shadowBuilder, null, 0);
+////        imageView.setVisibility(View.INVISIBLE);
+    }
+
+    private void set_this_view_to_topest() {
+        ViewGroup viewGroup = (ViewGroup) imageView.getParent();
+        View obj = imageView;
+
+        while (viewGroup != null && isNotViewRootImpl(viewGroup)) {
+            viewGroup.bringChildToFront(obj);
+            obj = viewGroup;
+            viewGroup = (ViewGroup) viewGroup.getParent();
+        }
     }
 
 //    }
@@ -563,17 +427,18 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public class MyDragShadowBuilder extends View.DragShadowBuilder{
+    public class MyDragShadowBuilder extends View.DragShadowBuilder {
         public static final float SHADOW_BOTTOM_SIZE = 10f;
         public static final float SHADOW_RIGHT_SIZE = 5f;
         KCExtraImageView mView;
         private final Drawable shadow;
         private int width, height;
         final int paddingLeft, paddingTop;
+
         public MyDragShadowBuilder(View view) {
             super(view);
             shadow = new ColorDrawable(Color.parseColor("#ffff0000"));
-            mView = (KCExtraImageView)view;
+            mView = (KCExtraImageView) view;
             paddingLeft = mView.getPaddingLeft();
             paddingTop = mView.getPaddingTop();
         }
@@ -608,20 +473,6 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
             canvas.drawRect(rect, paint);
 
             super.onDrawShadow(canvas);
-        }
-    }
-
-    public class OnDragListener implements View.OnDragListener {
-
-        @Override
-        public boolean onDrag(View v, DragEvent event) {
-            switch (event.getAction()) {
-                case DragEvent.ACTION_DRAG_ENDED:
-                    imageView.setVisibility(View.VISIBLE);
-                    imageView.getRootView().setOnDragListener(null);
-                    break;
-            }
-            return false;
         }
     }
 }
