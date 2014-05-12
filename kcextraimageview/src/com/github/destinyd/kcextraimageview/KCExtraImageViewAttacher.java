@@ -9,16 +9,14 @@ import android.os.Build;
 import android.util.FloatMath;
 import android.util.Log;
 import android.view.*;
-import android.widget.AbsoluteLayout;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import com.github.destinyd.kcextraimageview.photoview.Compat;
 import com.github.destinyd.kcextraimageview.photoview.PhotoView;
 import com.github.destinyd.kcextraimageview.photoview.PhotoViewAttacher;
 
 import java.util.ArrayList;
-
-import static android.view.MotionEvent.ACTION_CANCEL;
 
 /**
  * Created by dd on 14-5-6.
@@ -157,8 +155,6 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     private float mMaxScale = DEFAULT_MAX_SCALE;
 
     protected PointF startPoint = new PointF();
-    private Matrix matrix = new Matrix();
-    protected Matrix currentMatrix = new Matrix();
     private int mode = 0;
     private static final int NONE = 0;
     private static final int DRAG = 1;
@@ -166,6 +162,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     private float startDis;// 开始距离
     private PointF midPoint;// 中间点
     private double startAngle;// 开始角度
+    private double currentAngle;// 开始角度
     private long FLOAT_TIME = 500; // 0.5s
 
     private MotionEvent lastEvent;
@@ -181,8 +178,6 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:// 手指压下屏幕
                 Log.e(TAG, "normal ACTION_DOWN");
-//                    mode = DRAG;
-                currentMatrix.set(getImageView().getImageMatrix());// 记录ImageView当前的移动位置
                 startPoint.set(event.getX(), event.getY());
                 handled = true;
                 break;
@@ -204,7 +199,8 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                 } else if (mode == ZOOM) {// 缩放
                     if (event.getPointerCount() >= 2) {
                         float endDis = distance(event);// 结束距离
-                        int turnAngel = (int) (angle(event) - startAngle);// 变化的角度
+                        currentAngle = angle(event);
+                        int turnAngel = (int) (currentAngle - startAngle);// 变化的角度
 //                        if(imageView.imageViewFrom != null)
 //                            Log.v(TAG, "imageViewFrom turnAngel=" + turnAngel);
 //                        else
@@ -212,18 +208,20 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                         if (endDis > 10f) {
                             float scale = endDis / startDis;// 得到缩放倍数
 //
-//                            matrix.set(currentMatrix);
-//                            matrix.postScale(scale, scale, midPoint.x, midPoint.y);
                             //放大
                             setScale(scale, midPoint.x, midPoint.y, true);
 //                        Log.v("ACTION_MOVE", "imageView.getHeight()="
 //                                + getImageView().getHeight());
 //                        Log.v("ACTION_MOVE", "imageView.getWidth()="
 //                                + getImageView().getWidth());
-                            if (Math.abs(turnAngel) > 5) {
+                            if (Math.abs(turnAngel) > 3) {
 
+//                                Log.e(TAG, "currentAngle:" + currentAngle);
+//                                Log.e(TAG, "turnAngel:" + turnAngel);
+//                                Log.e(TAG, "currentAngle + turnAngel:" + currentAngle + turnAngel);
                                 // 设置变化的角度
-                                setRotationTo(turnAngel);
+//                                setRotationTo(turnAngel);
+                                setPhotoViewRotation(turnAngel, false);
 //                            update();
                                 // 设置变化的角度
 //                            matrix.postRotate(turnAngel, midPoint.x, midPoint.y);
@@ -280,7 +278,6 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                     startAngle = angle(event);
                     if (startDis > 10f) {
                         midPoint = mid(event);
-                        currentMatrix.set(getImageView().getImageMatrix());// 记录ImageView当前的缩放倍数
                     }
                 }
                 break;
@@ -301,12 +298,6 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                 Log.e(TAG, "ACTION_OTHER");
                 break;
         }
-//        // Bitmap
-//        // bitmap0=((BitmapDrawable)getResources().getDrawable(R.drawable.test2)).getBitmap();
-//        // LayerDrawable layerDrawable=LayerDrawable.
-//        // Bitmap bitmap=Bitmap.createBitmap(bitmap0, x, y, width, height,
-//        // m, filter)
-//        getImageView().setImageMatrix(matrix);
 
 
         // Try the Scale/Drag detector
@@ -326,11 +317,20 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     private void from_window() {
         anime_to_original();
         //必须动画走完再设置回原始，否则会出直接变当前比例原始图BUG
-        to_original_layout_params();
+//        to_original_layout_params();
     }
 
     private void anime_to_original() {
-        imageView.setScale(1, true);
+//        imageView.setScale(1, true);
+        Log.e(TAG, "currentAngle :" + currentAngle);
+        setPhotoViewRotation(-(float) currentAngle, true);
+        setScale(1, true);
+        //怎么回0度。。
+//        if (currentAngle <= 180)
+//            setPhotoViewRotation(-(float) currentAngle, true);
+//        else {
+//            setPhotoViewRotation((float) (360 - currentAngle), true);
+//        }
     }
 
     private void to_original_layout_params() {
@@ -473,6 +473,107 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
             canvas.drawRect(rect, paint);
 
             super.onDrawShadow(canvas);
+        }
+    }
+
+
+    //    float currentAngle = 0;
+//
+//    /**
+//     * @deprecated use {@link #setRotationTo(float)}
+//     */
+    @Override
+    public void setPhotoViewRotation(float degrees) {
+        setPhotoViewRotation(degrees, false);
+    }
+
+//    @Override
+//    public void setRotationTo(float degrees) {
+//        super.setRotationTo(degrees);
+//        currentAngle = degrees;
+//    }
+//
+//    @Override
+//    public void setRotationBy(float degrees) {
+//        super.setRotationBy(degrees);
+//        currentAngle = degrees;
+//    }
+
+    AnimatedRotationRunnable runnableRotation = null;
+
+    public void setPhotoViewRotation(float degrees, boolean animate) {
+        float targetAngle = degrees % 360;
+        if (animate) {
+            if (runnableRotation != null)
+                runnableRotation.stop();
+            runnableRotation = new AnimatedRotationRunnable(targetAngle);
+            imageView.post(runnableRotation);
+        } else {
+            mSuppMatrix.setRotate(targetAngle);
+            checkAndDisplayMatrix();
+        }
+    }
+
+    public class AnimatedRotationRunnable implements Runnable {
+
+        private boolean running = true;
+        private final long mStartTime;
+        private final float degrees;
+        private float rotateDegrees;
+        private float fromDegrees = 0;
+        private float totalDegrees = 0;
+
+        public void stop() {
+            this.running = false;
+        }
+
+        public AnimatedRotationRunnable(final float degrees) {
+            mStartTime = System.currentTimeMillis();
+            this.degrees = degrees;
+            Log.e(TAG, "degrees:" + degrees);
+        }
+
+        @Override
+        public void run() {
+            if (running) {
+                ImageView imageView = getImageView();
+                if (imageView == null) {
+                    return;
+                }
+
+                float t = interpolate();
+
+                rotateDegrees = t * degrees - fromDegrees;
+                totalDegrees += rotateDegrees;
+                if (Math.abs(totalDegrees) > Math.abs(degrees)) {
+                    Log.e(TAG, "totalDegrees:" + totalDegrees);
+                    Log.e(TAG, "Math.abs(totalDegrees) > Math.abs(degrees)");
+                    rotateDegrees = degrees - fromDegrees;
+                }
+                Log.e(TAG, "rotateDegrees:" + rotateDegrees);
+                mSuppMatrix.postRotate(rotateDegrees);
+//                checkAndDisplayMatrix();
+                setImageViewMatrix(getDrawMatrix()); // not check
+                fromDegrees = t * degrees;
+
+                // We haven't hit our target scale yet, so post ourselves again
+                if (t < 1f && running) {
+                    Log.e(TAG, "totalDegrees:" + totalDegrees);
+                    Compat.postOnAnimation(imageView, this);
+                } else {
+                    if (mode == NONE) {
+                        to_original_layout_params();
+                        update(); // 直接恢复，不太平滑
+                    }
+                }
+            }
+        }
+
+        private float interpolate() {
+            float t = 1f * (System.currentTimeMillis() - mStartTime) / ZOOM_DURATION;
+            t = Math.min(1f, t);
+            t = sInterpolator.getInterpolation(t);
+            return t;
         }
     }
 }

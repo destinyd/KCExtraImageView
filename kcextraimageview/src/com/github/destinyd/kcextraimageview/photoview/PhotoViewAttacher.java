@@ -48,8 +48,8 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
     // release builds
     private static final boolean DEBUG = Log.isLoggable(LOG_TAG, Log.DEBUG);
 
-    static final Interpolator sInterpolator = new AccelerateDecelerateInterpolator();
-    int ZOOM_DURATION = DEFAULT_ZOOM_DURATION;
+    protected static final Interpolator sInterpolator = new AccelerateDecelerateInterpolator();
+    protected int ZOOM_DURATION = DEFAULT_ZOOM_DURATION;
 
     static final int EDGE_NONE = -1;
     static final int EDGE_LEFT = 0;
@@ -122,7 +122,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
     // These are set so we don't keep allocating them on the heap
     private final Matrix mBaseMatrix = new Matrix();
     private final Matrix mDrawMatrix = new Matrix();
-    private final Matrix mSuppMatrix = new Matrix();
+    protected final Matrix mSuppMatrix = new Matrix();
     private final RectF mDisplayRect = new RectF();
     private final float[] mMatrixValues = new float[9];
 
@@ -659,7 +659,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
     /**
      * Helper method that simply checks the Matrix, and then displays the result
      */
-    private void checkAndDisplayMatrix() {
+    protected void checkAndDisplayMatrix() {
         if (checkMatrixBounds()) {
             setImageViewMatrix(getDrawMatrix());
         }
@@ -801,7 +801,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
         checkMatrixBounds();
     }
 
-    private void setImageViewMatrix(Matrix matrix) {
+    protected void setImageViewMatrix(Matrix matrix) {
         ImageView imageView = getImageView();
         if (null != imageView) {
 
