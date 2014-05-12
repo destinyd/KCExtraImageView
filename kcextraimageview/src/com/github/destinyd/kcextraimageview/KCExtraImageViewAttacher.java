@@ -10,7 +10,6 @@ import android.util.FloatMath;
 import android.util.Log;
 import android.view.*;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import com.github.destinyd.kcextraimageview.photoview.Compat;
 import com.github.destinyd.kcextraimageview.photoview.PhotoView;
@@ -137,7 +136,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
             return mRoot;
         View view = getImageView();
         if (null != view) {
-            while (null != view.getParent() && isNotViewRootImpl(view)) {
+            while (null != view.getParent() && isNotAboveRoot(view)) {
                 view = (View) view.getParent();
             }
             mRoot = (ViewGroup) view;
@@ -146,8 +145,9 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         return null;
     }
 
-    private boolean isNotViewRootImpl(View view) {
-        return !view.getParent().getClass().getName().equals("android.view.ViewRootImpl");
+    private boolean isNotAboveRoot(View view) {
+        String strClass = view.getParent().getClass().getName();
+        return !strClass.equals("android.view.ViewRootImpl") && !strClass.equals("android.view.ViewRoot");
     }
 
     private float mMinScale = DEFAULT_MIN_SCALE;
@@ -189,7 +189,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                     if (event.getEventTime() - event.getDownTime() >= FLOAT_TIME) {
                         Log.e(TAG, "normal to DRAG");
                         mode = DRAG;
-                        to_window(event);
+                        to_window();
                         imageView.setZoomable(true);
                     }
                 }
@@ -322,7 +322,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 
     private void anime_to_original() {
 //        imageView.setScale(1, true);
-        Log.e(TAG, "currentAngle :" + currentAngle);
+//        Log.e(TAG, "currentAngle :" + currentAngle);
         setPhotoViewRotation(-(float) currentAngle, true);
         setScale(1, true);
         //怎么回0度。。
@@ -344,9 +344,10 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 
     KCExtraImageView topImageView;
 
-    private void to_window(MotionEvent event) {
+    private void to_window() {
         Log.e(TAG, "to_window");
         mState = STATE_LONG_CLICK;
+        imageView.setShadowable(true);
         set_this_view_to_topest();
 
 
@@ -380,7 +381,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         ViewGroup viewGroup = (ViewGroup) imageView.getParent();
         View obj = imageView;
 
-        while (viewGroup != null && isNotViewRootImpl(viewGroup)) {
+        while (viewGroup != null && isNotAboveRoot(viewGroup)) {
             viewGroup.bringChildToFront(obj);
             obj = viewGroup;
             viewGroup = (ViewGroup) viewGroup.getParent();
@@ -530,13 +531,13 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         public AnimatedRotationRunnable(final float degrees) {
             mStartTime = System.currentTimeMillis();
             this.degrees = degrees;
-            Log.e(TAG, "degrees:" + degrees);
+//            Log.e(TAG, "degrees:" + degrees);
         }
 
         @Override
         public void run() {
             if (running) {
-                ImageView imageView = getImageView();
+//                ImageView imageView = getImageView();
                 if (imageView == null) {
                     return;
                 }
@@ -550,7 +551,7 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
                     Log.e(TAG, "Math.abs(totalDegrees) > Math.abs(degrees)");
                     rotateDegrees = degrees - fromDegrees;
                 }
-                Log.e(TAG, "rotateDegrees:" + rotateDegrees);
+//                Log.e(TAG, "rotateDegrees:" + rotateDegrees);
                 mSuppMatrix.postRotate(rotateDegrees);
 //                checkAndDisplayMatrix();
                 setImageViewMatrix(getDrawMatrix()); // not check
@@ -558,11 +559,12 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 
                 // We haven't hit our target scale yet, so post ourselves again
                 if (t < 1f && running) {
-                    Log.e(TAG, "totalDegrees:" + totalDegrees);
+//                    Log.e(TAG, "totalDegrees:" + totalDegrees);
                     Compat.postOnAnimation(imageView, this);
                 } else {
                     if (mode == NONE) {
                         to_original_layout_params();
+                        imageView.setShadowable(false);
                         update(); // 直接恢复，不太平滑
                     }
                 }
