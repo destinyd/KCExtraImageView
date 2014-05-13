@@ -10,6 +10,8 @@ import android.util.FloatMath;
 import android.util.Log;
 import android.view.*;
 import android.widget.FrameLayout;
+import android.widget.GridLayout;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import com.github.destinyd.kcextraimageview.photoview.Compat;
 import com.github.destinyd.kcextraimageview.photoview.PhotoView;
@@ -355,6 +357,8 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         String strClass = imageView.getParent().getClass().getName();
         if (strClass.equals("android.widget.RelativeLayout")) {
             imageView.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        } else if (strClass.equals("android.widget.LinearLayout")) {
+            imageView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
         } else if (strClass.equals("android.widget.FrameLayout")) {
             imageView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         } else {

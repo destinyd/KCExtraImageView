@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 
 public class ExampleListActivity extends Activity implements View.OnClickListener {
 
@@ -45,10 +44,11 @@ public class ExampleListActivity extends Activity implements View.OnClickListene
                 startActivity(new Intent(this, ExampleMultipleActivity.class));
                 break;
             case R.id.button3:
-                startActivity(new Intent(this, ExampleSimpleActivity.class));
+                startActivity(new Intent(this, ExampleImagesActivity.class));
                 break;
             case R.id.button4:
-                startActivity(new Intent(this, ExampleSimpleActivity.class));
+//                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+                startActivity(new Intent(this, ExampleImagesActivity.class));
                 break;
         }
     }
