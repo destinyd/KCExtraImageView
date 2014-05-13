@@ -23,14 +23,10 @@ public class ExampleListActivity extends Activity implements View.OnClickListene
 
 
     private void setMenuBtnsClick() {
-        Button button1 = (Button) findViewById(R.id.button1);
-        Button button2 = (Button) findViewById(R.id.button2);
-        Button button3 = (Button) findViewById(R.id.button3);
-        Button button4 = (Button) findViewById(R.id.button4);
-        button1.setOnClickListener(this);
-        button2.setOnClickListener(this);
-        button3.setOnClickListener(this);
-        button4.setOnClickListener(this);
+        findViewById(R.id.button1).setOnClickListener(this);
+        findViewById(R.id.button2).setOnClickListener(this);
+        findViewById(R.id.button3).setOnClickListener(this);
+        findViewById(R.id.button4).setOnClickListener(this);
     }
 
 

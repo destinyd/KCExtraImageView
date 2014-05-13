@@ -1,6 +1,7 @@
 package com.github.destinyd.kcextraimageview;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.*;
 import android.graphics.drawable.ColorDrawable;
@@ -112,15 +113,17 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
 //        getRoot().addView(mOpenView, layoutParams);
     }
 
-    private void close_full_screen() {
+    public void close_full_screen() {
 //        resume_all_view();
         close_open_image_view();
         mState = STATE_NORMAL;
     }
 
     private void close_open_image_view() {
-        WindowManager wm = (WindowManager) imageView.getContext().getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
-        wm.removeView(mOpenView);
+        if(mOpenView != null) {
+            windowManager.removeView(mOpenView);
+            mOpenView = null;
+        }
     }
 
     private void hide_all_view() {
@@ -336,7 +339,9 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
     }
 
     private void to_original_layout_params() {
-        imageView.setLayoutParams(layoutParamsImageView);
+        if(layoutParamsImageView != null) {
+            imageView.setLayoutParams(layoutParamsImageView);
+        }
     }
 
     private void remove_from_window() {
@@ -353,7 +358,6 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         set_this_view_to_topest();
 
 
-        layoutParamsImageView = imageView.getLayoutParams();
         String strClass = imageView.getParent().getClass().getName();
         if (strClass.equals("android.widget.RelativeLayout")) {
             imageView.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
