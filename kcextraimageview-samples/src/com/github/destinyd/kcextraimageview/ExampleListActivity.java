@@ -44,7 +44,7 @@ public class ExampleListActivity extends Activity implements View.OnClickListene
                 break;
             case R.id.button4:
 //                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-                startActivity(new Intent(this, ExampleImagesActivity.class));
+                startActivity(new Intent(this, ExampleNewActivity.class));
                 break;
         }
     }
