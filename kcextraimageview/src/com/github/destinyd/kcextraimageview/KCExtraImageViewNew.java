@@ -352,6 +352,12 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
     private void move(MotionEvent event) {
         Log.e(TAG, "move");
+        PointF newPoint = new PointF(event.getX(), event.getY());
+        float distanceX = newPoint.x - startPoint.x;
+        float distanceY = newPoint.y - startPoint.y;
+        imageViewTop.mSuppMatrix.postTranslate(distanceX, distanceY);
+        imageViewTop.setImageViewMatrix(imageViewTop.getDrawMatrix());
+        startPoint = newPoint;
     }
 
     private void fall() {
