@@ -286,7 +286,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                                 // 设置变化的角度
 //                                setRotationTo(turnAngel);
 //                                imageViewTop.setPhotoViewRotation(turnAngel, false);
-                                imageViewTop.setPhotoViewRotation(turnAngle % 360, true);
+                                imageViewTop.setPhotoViewRotation(turnAngle, false);
 //                            update();
                                 // 设置变化的角度
 //                            matrix.postRotate(turnAngel, midPoint.x, midPoint.y);

@@ -222,7 +222,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
             runnableRotation = new AnimatedRotationRunnable(targetAngle);
             post(runnableRotation);
         } else {
-            mSuppMatrix.postRotate(targetAngle);
+            RectF rectF = getDisplayRect();
+            mSuppMatrix.postRotate(targetAngle, rectF.centerX(), rectF.centerY());
             setImageViewMatrix(getDrawMatrix());
         }
     }
@@ -260,7 +261,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 //                    rotateDegrees = degrees - fromDegrees;
 //                }
 //                Log.e(TAG, "rotateDegrees:" + rotateDegrees);
-                mSuppMatrix.postRotate(rotateDegrees);
+                RectF rectF = getDisplayRect();
+                mSuppMatrix.postRotate(rotateDegrees, rectF.centerX(), rectF.centerY());
 //                setImageViewMatrix(getDrawMatrix());;
                 setImageViewMatrix(getDrawMatrix()); // not check
                 fromDegrees = t * degrees;
