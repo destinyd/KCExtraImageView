@@ -19,8 +19,8 @@ import com.github.destinyd.kcextraimageview.photoview.log.LogManager;
 public class KCExtraImageViewNewTopShower extends ImageView {
 
     private static final String TAG = "KCExtraImageViewNewTopShower";
-    public static final float DEFAULT_MAX_SCALE = 3.0f;
-    public static final float DEFAULT_MID_SCALE = 1.0f;
+    public static final float DEFAULT_MAX_SCALE = 2.0f;
+    public static final float DEFAULT_MID_SCALE = 0.5f;
     public static final float DEFAULT_MIN_SCALE = 0.1f;
     private float mMinScale = DEFAULT_MIN_SCALE;
     private float mMidScale = DEFAULT_MID_SCALE;
@@ -112,6 +112,10 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
     private float scaleBase;
+
+    public float getScaleBase() {
+        return scaleBase;
+    }
 
     public void setScaleBase(float scale){
         scaleBase = scale;
@@ -214,7 +218,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     AnimatedRotationRunnable runnableRotation = null;
 
     public void setPhotoViewRotation(float degrees, boolean animate) {
-        Log.e(TAG, "setPhotoViewRotation degrees:" + degrees);
+//        Log.e(TAG, "setPhotoViewRotation degrees:" + degrees);
         float targetAngle = degrees % 360;
         if (animate) {
             if (runnableRotation != null)
