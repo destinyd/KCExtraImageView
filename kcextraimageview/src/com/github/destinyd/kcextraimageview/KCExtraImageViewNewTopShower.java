@@ -202,6 +202,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     AnimatedRotationRunnable runnableRotation = null;
 
     public void setPhotoViewRotation(float degrees, boolean animate) {
+        Log.e(TAG, "setPhotoViewRotation degrees:" + degrees);
         float targetAngle = degrees % 360;
         if (animate) {
             if (runnableRotation != null)
@@ -209,9 +210,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
             runnableRotation = new AnimatedRotationRunnable(targetAngle);
             post(runnableRotation);
         } else {
-            mSuppMatrix.setRotate(targetAngle);
+            mSuppMatrix.postRotate(targetAngle);
             setImageViewMatrix(getDrawMatrix());
-            ;
         }
     }
 
@@ -242,11 +242,11 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
                 rotateDegrees = t * degrees - fromDegrees;
                 totalDegrees += rotateDegrees;
-                if (Math.abs(totalDegrees) > Math.abs(degrees)) {
-                    Log.e(TAG, "totalDegrees:" + totalDegrees);
-                    Log.e(TAG, "Math.abs(totalDegrees) > Math.abs(degrees)");
-                    rotateDegrees = degrees - fromDegrees;
-                }
+//                if (Math.abs(totalDegrees) > Math.abs(degrees)) {
+//                    Log.e(TAG, "totalDegrees:" + totalDegrees);
+//                    Log.e(TAG, "Math.abs(totalDegrees) > Math.abs(degrees)");
+//                    rotateDegrees = degrees - fromDegrees;
+//                }
 //                Log.e(TAG, "rotateDegrees:" + rotateDegrees);
                 mSuppMatrix.postRotate(rotateDegrees);
 //                setImageViewMatrix(getDrawMatrix());;
@@ -515,15 +515,15 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
     }
 
-    float x, y;
+    public float x = 0, y = 0;
     AnimatedTranslateRunnable animatedTranslateRunnable = null;
 
-    public void setTranlate(float dX, float dY){
-        setTranlate(dX, dY, false);
+    public void setTranslate(float dX, float dY) {
+        setTranslate(dX, dY, false);
     }
 
-    public void setTranlate(float dX, float dY,
-                            boolean animate) {
+    public void setTranslate(float dX, float dY,
+                             boolean animate) {
         if (animate) {
             if (animatedTranslateRunnable != null)
                 animatedTranslateRunnable.stop();
@@ -585,7 +585,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
 
-    public static float distance(PointF fromP, PointF toP){
+    public static float distance(PointF fromP, PointF toP) {
         float dx = toP.x - fromP.x;
         float dy = toP.y - fromP.y;
         return FloatMath.sqrt(dx * dx + dy * dy);

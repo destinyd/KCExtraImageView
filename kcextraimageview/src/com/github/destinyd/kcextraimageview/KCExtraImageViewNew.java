@@ -6,7 +6,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.FloatMath;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.*;
@@ -64,6 +63,8 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         }
     }
 
+    float scaleBase = 1;
+
     private void init(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
             setLayerType(View.LAYER_TYPE_SOFTWARE, null);
@@ -71,19 +72,17 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         windowManager = (WindowManager) context.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         setOnTouchListener(this);
         resetMatrix();
-        if (checkMatrixBounds()) {
-            setImageViewScaleTypeMatrix(this);
-        }
+        setImageViewScaleTypeMatrix(this);
         RectF rect = getDisplayRect();
         if (rect == null)
             return;
         float scaleX = (getWidth() - getPaddingLeft() - getPaddingRight()) / rect.width();
         float scaleY = (getHeight() - getPaddingTop() - getPaddingBottom()) / rect.height();
-        float scale = scaleY > scaleX ? scaleX : scaleY;
+        scaleBase = scaleY > scaleX ? scaleX : scaleY;
         Log.e(TAG, "rect scaleX:" + scaleX);
         Log.e(TAG, "rect scaleY:" + scaleY);
 
-        mSuppMatrix.setScale(scale, scale);
+        mSuppMatrix.setScale(scaleBase, scaleBase);
         setImageMatrix(getDrawMatrix());
 
         ViewTreeObserver observer = getViewTreeObserver();
@@ -225,9 +224,9 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     private static final int ACTION_MODE_ZOOM = 2;
     private float startDis;// 开始距离
     private PointF midPoint;// 中间点
-    private double startAngle;// 开始角度
-    private double currentAngle;// 开始角度
-    private long FLOAT_TIME = 200; // 0.2s
+    private double lastFingerAngle;// 开始角度
+    private double currentFingerAngle;// 开始角度
+    private long FLOAT_TIME = 500; // 0.5s
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
@@ -251,35 +250,43 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                     }
                 }
                 if (mActionMode == ACTION_MODE_DRAG) {
-                    if(mState != STATE_FULLSCREEN) {
+                    if (mState != STATE_FULLSCREEN) {
                         move(event);
                     }
                 } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
                     if (event.getPointerCount() >= 2) {
                         float endDis = distance(event);// 结束距离
-                        currentAngle = angle(event);
-                        int turnAngel = (int) (currentAngle - startAngle);// 变化的角度
+                        currentFingerAngle = angle(event);
+                        int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
 //                        if(imageView.imageViewFrom != null)
 //                            Log.v(TAG, "imageViewFrom turnAngel=" + turnAngel);
 //                        else
 //                            Log.e(TAG, "null turnAngel=" + turnAngel);
                         if (endDis > 10f) {
-                            float scale = mToperShowerScale * endDis / startDis;// 得到缩放倍数
+                            float scale = scaleBase * endDis / startDis;// 得到缩放倍数
 //
                             //放大
-                            imageViewTop.setScale(scale, midPoint.x, midPoint.y, true);//, midPoint.x, midPoint.y, true);
+                            imageViewTop.setScale(scale, true);//, midPoint.x, midPoint.y, true);//, midPoint.x, midPoint.y, true);
 //                        Log.v("ACTION_MOVE", "imageView.getHeight()="
 //                                + getImageView().getHeight());
 //                        Log.v("ACTION_MOVE", "imageView.getWidth()="
 //                                + getImageView().getWidth());
-                            if (Math.abs(turnAngel) > 3) {
+                            if (Math.abs(turnAngle) > 5) {
 
-//                                Log.e(TAG, "currentAngle:" + currentAngle);
+                                if (currentFingerAngle != lastFingerAngle) {
+                                    Log.e(TAG, "currentFingerAngle:" + currentFingerAngle);
+                                    Log.e(TAG, "lastFingerAngle:" + lastFingerAngle);
+                                    Log.e(TAG, "turnAngel:" + turnAngle);
+                                }
+                                lastFingerAngle = currentFingerAngle;
+
+//                                Log.e(TAG, "currentFingerAngle:" + currentFingerAngle);
 //                                Log.e(TAG, "turnAngel:" + turnAngel);
-//                                Log.e(TAG, "currentAngle + turnAngel:" + currentAngle + turnAngel);
+//                                Log.e(TAG, "currentFingerAngle + turnAngel:" + currentFingerAngle + turnAngel);
                                 // 设置变化的角度
 //                                setRotationTo(turnAngel);
-                                imageViewTop.setPhotoViewRotation(turnAngel, false);
+//                                imageViewTop.setPhotoViewRotation(turnAngel, false);
+                                imageViewTop.setPhotoViewRotation(turnAngle % 360, true);
 //                            update();
                                 // 设置变化的角度
 //                            matrix.postRotate(turnAngel, midPoint.x, midPoint.y);
@@ -318,7 +325,8 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                     Log.e(TAG, "onTouch to ACTION_MODE_ZOOM");
                     mActionMode = ACTION_MODE_ZOOM;
                     startDis = distance(event);
-                    startAngle = angle(event);
+                    lastFingerAngle = angle(event);
+                    currentFingerAngle = lastFingerAngle;
                     if (startDis > 10f) {
                         midPoint = mid(this, event);
                     }
@@ -365,7 +373,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         PointF newPoint = new PointF(event.getX(), event.getY());
         float distanceX = newPoint.x - currentPoint.x;
         float distanceY = newPoint.y - currentPoint.y;
-        imageViewTop.setTranlate(distanceX, distanceY);
+        imageViewTop.setTranslate(distanceX, distanceY);
         currentPoint = newPoint;
         float dis = distance(startPoint, newPoint);
         if (dis >= DISTANCE_TO_FULLSCREEN) {
@@ -445,8 +453,8 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
 
     private void anime_to_original() {
-        imageViewTop.setPhotoViewRotation(-(float) currentAngle, true);
-        imageViewTop.setScale(mToperShowerScale, true);
+        imageViewTop.setPhotoViewRotation(-(float) currentFingerAngle, true);
+        imageViewTop.setScale(scaleBase, true);
     }
 
     private int mState = 0;
@@ -527,10 +535,11 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         float scaleX = (getWidth() - getPaddingLeft() - getPaddingRight()) / rectTop.width();
         float scaleY = (getHeight() - getPaddingTop() - getPaddingBottom()) / rectTop.height();
         mToperShowerScale = scaleY > scaleX ? scaleX : scaleY;
-        imageViewTop.mSuppMatrix.setScale(mToperShowerScale, mToperShowerScale);
+        imageViewTop.setScale(mToperShowerScale);
+//        imageViewTop.setScale(scaleBase);
 
 //        imageViewTop.mSuppMatrix.postTranslate(leftImageView + locationLeftFix, topImageView + locationTopFix);
-        imageViewTop.mSuppMatrix.postTranslate(leftImageView, topImageView);
+        imageViewTop.setTranslate(leftImageView, topImageView);
 
 //        if(imageViewTop.checkMatrixBounds())
         imageViewTop.setImageViewMatrix(imageViewTop.getDrawMatrix()); // 原始尺寸
