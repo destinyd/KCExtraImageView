@@ -2,6 +2,7 @@ package com.github.destinyd.kcextraimageview;
 
 import android.content.Context;
 import android.graphics.*;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.FloatMath;
@@ -9,6 +10,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import com.github.destinyd.kcextraimageview.photoview.Compat;
 import com.github.destinyd.kcextraimageview.photoview.log.LogManager;
@@ -117,12 +119,13 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         return scaleBase;
     }
 
-    public void setScaleBase(float scale){
+    public void setScaleBase(float scale) {
         scaleBase = scale;
         setScale(scaleBase);
     }
 
     int xBase, yBase;
+
     public void setLocationBase(int left, int top) {
         xBase = left;
         yBase = top;
@@ -166,6 +169,10 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
     AnimatedZoomRunnable mCurrentAnimatedZoomRunnable = null;
+
+    public void moveToOrigin() {
+        setTranslate(xBase - x, yBase - y, true);
+    }
 
     public class AnimatedZoomRunnable implements Runnable {
 
@@ -290,7 +297,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         }
     }
 
-    AnimatedRotationListener mAnimatedRotationListener = null;
+    OnAnimatedListener mAnimatedRotationListener = null;
 
     /**
      * Interface definition for a callback to be invoked when the internal Matrix has changed for
@@ -298,7 +305,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
      *
      * @author Chris Banes
      */
-    public static interface AnimatedRotationListener {
+    public static interface OnAnimatedListener {
         /**
          * Callback for when the Matrix displaying the Drawable has changed. This could be because
          * the View's bounds have changed, or the user has zoomed.
@@ -306,7 +313,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         void onAnimated();
     }
 
-    public void setAnimatedRotationListener(AnimatedRotationListener mAnimatedRotationListener) {
+    public void setAnimatedRotationListener(OnAnimatedListener mAnimatedRotationListener) {
         this.mAnimatedRotationListener = mAnimatedRotationListener;
     }
 
@@ -545,32 +552,41 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         if (animate) {
             if (animatedTranslateRunnable != null)
                 animatedTranslateRunnable.stop();
-            post(new AnimatedTranslateRunnable(x, y,
-                    dX, dY));
+            post(new AnimatedTranslateRunnable(dX, dY));
         } else {
             mSuppMatrix.postTranslate(dX, dY);
 //            checkAndDisplayMatrix();
             setImageViewMatrix(getDrawMatrix());
+            x += dX;
+            y += dY;
         }
-        x = dX;
-        y = dY;
     }
 
+    int alpha = 255;
+
+    FrameLayout mParent;
+    public void setParent(FrameLayout frameLayout){
+        mParent = frameLayout;
+    }
+    public void setBackgroundAlpha(int alpha) {
+        int backgroundColor = alpha * 0x1000000;
+        mParent.setBackgroundColor(backgroundColor);
+        this.alpha = alpha;
+    }
 
     public class AnimatedTranslateRunnable implements Runnable {
 
-        private final float mFromX, mFromY;
         private final long mStartTime;
-        private final float mToX, mToY;
+        private final float mDX, mDY;
         boolean running = true;
+        float lastT = 0;
+        final int fromAlpha;
 
-        public AnimatedTranslateRunnable(final float fromX, final float fromY,
-                                         final float toX, final float toY) {
+        public AnimatedTranslateRunnable(final float dX, final float dY) {
             mStartTime = System.currentTimeMillis();
-            mFromX = fromX;
-            mFromY = fromY;
-            mToX = toX;
-            mToY = toY;
+            mDX = dX;
+            mDY = dY;
+            fromAlpha = alpha;
         }
 
         public void stop() {
@@ -581,15 +597,27 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         public void run() {
             if (running) {
                 float t = interpolate();
-                float x = mFromX + t * (mToX - mFromX);
-                float y = mFromY + t * (mToY - mFromY);
+                float dT = t - lastT;
+                float x = dT * mDX;
+                float y = dT * mDY;
 
                 mSuppMatrix.postTranslate(x, y);
                 setImageViewMatrix(getDrawMatrix());
 
+                int toAlpha = (int)((1-t) * fromAlpha);
+                if(toAlpha < 0)
+                    toAlpha = 0;
+                int backgroundColor = toAlpha * 0x1000000;
+                mParent.setBackgroundColor(backgroundColor);
+
+                lastT = t;
+
                 // We haven't hit our target scale yet, so post ourselves again
                 if (t < 1f) {
                     Compat.postOnAnimation(KCExtraImageViewNewTopShower.this, this);
+                } else {
+                    if (mAnimatedTranslateListener != null)
+                        mAnimatedTranslateListener.onAnimated();
                 }
             }
         }
@@ -602,6 +630,11 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         }
     }
 
+    OnAnimatedListener mAnimatedTranslateListener = null;
+
+    public void setAnimatedTranslateListener(OnAnimatedListener mAnimatedTranslateListener) {
+        this.mAnimatedTranslateListener = mAnimatedTranslateListener;
+    }
 
     public static float distance(PointF fromP, PointF toP) {
         float dx = toP.x - fromP.x;

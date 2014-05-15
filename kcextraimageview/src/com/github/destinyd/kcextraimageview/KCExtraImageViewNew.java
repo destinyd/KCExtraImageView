@@ -11,7 +11,6 @@ import android.util.TypedValue;
 import android.view.*;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import com.github.destinyd.kcextraimageview.photoview.Compat;
 import com.github.destinyd.kcextraimageview.photoview.PhotoView;
 import com.github.destinyd.kcextraimageview.photoview.PhotoViewAttacher;
 
@@ -22,7 +21,7 @@ import static com.github.destinyd.kcextraimageview.KCExtraImageViewNewTopShower.
 /**
  * Created by dd on 14-5-14.
  */
-public class KCExtraImageViewNew extends ImageView implements View.OnTouchListener, KCExtraImageViewNewTopShower.AnimatedRotationListener,
+public class KCExtraImageViewNew extends ImageView implements View.OnTouchListener, OnAnimatedListener,
         ViewTreeObserver.OnGlobalLayoutListener {
     private static final String TAG = "KCExtraImageViewNew";
     private static final float DISTANCE_TO_FULLSCREEN = 100;
@@ -244,15 +243,17 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         boolean handled = false;
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:// 手指压下屏幕
-                Log.e(TAG, "normal ACTION_DOWN, id:" + getId());
-                startPoint.set(event.getX(), event.getY());
-                currentPoint.set(event.getX(), event.getY());
-                handled = true;
-                if(mStateRunnable != null)
-                    mStateRunnable.stop();
-                mStateRunnable = new StateRunnable(FLOAT_TIME);
-                mStateRunnable.run();
-                mActionMode = ACTION_MODE_DRAG;
+                if(mState == STATE_NORMAL) {
+                    Log.e(TAG, "ACTION_DOWN:");
+                    startPoint.set(event.getX(), event.getY());
+                    currentPoint.set(event.getX(), event.getY());
+                    handled = true;
+                    if (mStateRunnable != null)
+                        mStateRunnable.stop();
+                    mStateRunnable = new StateRunnable(FLOAT_TIME);
+                    mStateRunnable.run();
+                    mActionMode = ACTION_MODE_DRAG;
+                }
                 break;
 
             case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
@@ -299,7 +300,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
             case MotionEvent.ACTION_UP:// 手指离开屏
                 Log.e("onTouch", "ACTION_UP");
                 if (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM) {
-                    mActionMode = ACTION_MODE_NONE;
                     fall();
                 }
                 break;
@@ -361,8 +361,9 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
             open();
         } else {
             float percent = dis / DISTANCE_TO_FULLSCREEN;
-            int backgroundColor = (int) (percent * 255) * 0x1000000;
-            frameLayoutTop.setBackgroundColor(backgroundColor);
+//            int backgroundColor = (int) (percent * 255) * 0x1000000;
+//            frameLayoutTop.setBackgroundColor(backgroundColor);
+            imageViewTop.setBackgroundAlpha((int) (percent * 255));
         }
     }
 
@@ -429,7 +430,15 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     private void fall() {
         Log.e(TAG, "fall");
         mState = STATE_BACKING;
-        anime_to_original();
+        if(mActionMode == ACTION_MODE_ZOOM) {
+            anime_to_original();
+        }else if(mActionMode == ACTION_MODE_DRAG){
+            move_to_original();
+        }
+    }
+
+    private void move_to_original() {
+        imageViewTop.moveToOrigin();
     }
 
 
@@ -505,6 +514,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
 
         windowManager.addView(frameLayoutTop, wmParams);
+        imageViewTop.setParent(frameLayoutTop);
 
 
     }
@@ -564,6 +574,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
         imageViewTop.setDrawingCacheEnabled(true);
         imageViewTop.setAnimatedRotationListener(this);
+        imageViewTop.setAnimatedTranslateListener(this);
 //        imageViewTop.setOnTouchListener(this);
 
 //        ViewTreeObserver observer = imageViewTop.getViewTreeObserver();
