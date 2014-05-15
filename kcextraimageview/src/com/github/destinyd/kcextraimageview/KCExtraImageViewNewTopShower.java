@@ -126,7 +126,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
     public void setScale(float scale, float focalX, float focalY,
                          boolean animate) {
-        Log.e(TAG, "setScale:" + scale);
+//        Log.e(TAG, "setScale:" + scale);
         // Check to see if the scale is within bounds
         if (scale < mMinScale || scale > mMaxScale) {
             LogManager

@@ -25,7 +25,7 @@ import static com.github.destinyd.kcextraimageview.KCExtraImageViewNewTopShower.
 public class KCExtraImageViewNew extends ImageView implements View.OnTouchListener, KCExtraImageViewNewTopShower.AnimatedRotationListener,
         ViewTreeObserver.OnGlobalLayoutListener {
     private static final String TAG = "KCExtraImageViewNew";
-    private static final float DISTANCE_TO_FULLSCREEN = 25;
+    private static final float DISTANCE_TO_FULLSCREEN = 100;
     WindowManager windowManager;
 
     // These are set so we don't keep allocating them on the heap
