@@ -489,17 +489,19 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
 
         wmParams.gravity = Gravity.TOP | Gravity.LEFT;
-        Log.e(TAG, "actionBarHeight:" + actionBarHeight);
-        Log.e(TAG, "statusBarHeight:" + statusBarHeight);
+//        Log.e(TAG, "actionBarHeight:" + actionBarHeight);
+//        Log.e(TAG, "statusBarHeight:" + statusBarHeight);
         wmParams.y = actionBarHeight + statusBarHeight;
         wmParams.width = widthTopLayer;
         wmParams.height = heightTopLayer;
 
         int[] location = new int[2];
         getLocationOnScreen(location);
+//        Log.e(TAG, "getLocationOnScreen location[0]:" + location[0]);
+//        Log.e(TAG, "getLocationOnScreen location[1]:" + location[1]);
 
         int leftImageView = location[0];// getAbsoluteLeft();
-        int topImageView = location[1] - actionBarHeight;// - getPaddingTop();// getAbsoluteTop();
+        int topImageView = location[1] - actionBarHeight -statusBarHeight;
         frameLayoutTop = new FrameLayout(getContext());
         FrameLayout.LayoutParams layoutParamsImageViewInTopLayer = new FrameLayout.LayoutParams(widthTopLayer, heightTopLayer);
         layoutParamsImageViewInTopLayer.gravity = Gravity.TOP | Gravity.LEFT;
@@ -512,6 +514,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 //        imageViewTop.setX(leftImageView);
 //        imageViewTop.setY(topImageView);
 
+        initTopShowerLocationAndScale(leftImageView, topImageView);
 
         frameLayoutTop.addView(imageViewTop, layoutParamsImageViewInTopLayer);
 
@@ -519,7 +522,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 //        frameLayoutTop.setBackgroundColor(Color.RED);
 //        imageViewTop.setBackgroundColor(Color.GREEN);
 
-        initTopShowerLocationAndScale(leftImageView, topImageView);
 
         windowManager.addView(frameLayoutTop, wmParams);
 
@@ -532,14 +534,26 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         RectF rectTop = imageViewTop.getDisplayRect();
         if (rectTop == null)
             return;
-        float scaleX = (getWidth() - getPaddingLeft() - getPaddingRight()) / rectTop.width();
-        float scaleY = (getHeight() - getPaddingTop() - getPaddingBottom()) / rectTop.height();
+        float scaleX = getImageViewWidth() / rectTop.width();
+        float scaleY = getImageViewHeight() / rectTop.height();
         mToperShowerScale = scaleY > scaleX ? scaleX : scaleY;
-        imageViewTop.setScale(mToperShowerScale);
+        imageViewTop.setScaleBase(mToperShowerScale);
+        int left, top, fix;
+        if(mToperShowerScale == scaleX){
+            fix = (int)((getImageViewHeight() - getDisplayRect().height()) /2);
+            left = leftImageView;
+            top = topImageView + fix;// - getPaddingTop();// - getPaddingBottom();
+        }
+        else{
+            fix = (int)(getImageViewWidth() - getDisplayRect().width()) /2;
+            left = leftImageView  + fix;// - getPaddingRight();
+            top = topImageView;
+        }
+        imageViewTop.setLocationBase(left, top);
+//        imageViewTop.setTranslate(left, top);
 //        imageViewTop.setScale(scaleBase);
 
 //        imageViewTop.mSuppMatrix.postTranslate(leftImageView + locationLeftFix, topImageView + locationTopFix);
-        imageViewTop.setTranslate(leftImageView, topImageView);
 
 //        if(imageViewTop.checkMatrixBounds())
         imageViewTop.setImageViewMatrix(imageViewTop.getDrawMatrix()); // 原始尺寸

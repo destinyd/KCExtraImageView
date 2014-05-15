@@ -111,6 +111,19 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         return mMatrixValues[whichValue];
     }
 
+    private float scaleBase;
+
+    public void setScaleBase(float scale){
+        scaleBase = scale;
+        setScale(scaleBase);
+    }
+
+    int xBase, yBase;
+    public void setLocationBase(int left, int top) {
+        xBase = left;
+        yBase = top;
+        setTranslate(left, top);
+    }
 
     public void setScale(float scale) {
         setScale(scale, false);
@@ -149,7 +162,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
     AnimatedZoomRunnable mCurrentAnimatedZoomRunnable = null;
-
 
     public class AnimatedZoomRunnable implements Runnable {
 
@@ -381,11 +393,11 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
 
-    private int getImageViewWidth() {
+    public int getImageViewWidth() {
         return getWidth() - getPaddingLeft() - getPaddingRight();
     }
 
-    private int getImageViewHeight() {
+    public int getImageViewHeight() {
         return getHeight() - getPaddingTop() - getPaddingBottom();
     }
 
