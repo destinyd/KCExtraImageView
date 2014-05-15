@@ -64,7 +64,9 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
     public RectF getDisplayRect() {
         return getDisplayRect(getDrawMatrix());
-    }    /**
+    }
+
+    /**
      * Helper method that simply checks the Matrix, and then displays the result
      */
     public void checkAndDisplayMatrix() {
@@ -115,7 +117,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
     public void setScale(float scale, boolean animate) {
-        Log.e(TAG, "setScale:" + scale);
+//        Log.e(TAG, "setScale:" + scale);
         setScale(scale,
                 (getRight()) / 2,
                 (getBottom()) / 2,
@@ -135,6 +137,9 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         }
 
         if (animate) {
+            mCurrentAnimatedZoomRunnable = new AnimatedZoomRunnable(getScale(), scale,
+                    focalX, focalY);
+            mCurrentAnimatedZoomRunnable.stop();
             post(new AnimatedZoomRunnable(getScale(), scale,
                     focalX, focalY));
         } else {
@@ -143,12 +148,15 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         }
     }
 
+    AnimatedZoomRunnable mCurrentAnimatedZoomRunnable = null;
+
 
     public class AnimatedZoomRunnable implements Runnable {
 
         private final float mFocalX, mFocalY;
         private final long mStartTime;
         private final float mZoomStart, mZoomEnd;
+        boolean running = true;
 
         public AnimatedZoomRunnable(final float currentZoom, final float targetZoom,
                                     final float focalX, final float focalY) {
@@ -159,20 +167,26 @@ public class KCExtraImageViewNewTopShower extends ImageView {
             mZoomEnd = targetZoom;
         }
 
+
+        public void stop() {
+            running = false;
+        }
+
         @Override
         public void run() {
+            if (running) {
+                float t = interpolate();
+                float scale = mZoomStart + t * (mZoomEnd - mZoomStart);
+                float deltaScale = scale / getScale();
 
-            float t = interpolate();
-            float scale = mZoomStart + t * (mZoomEnd - mZoomStart);
-            float deltaScale = scale / getScale();
+                mSuppMatrix.postScale(deltaScale, deltaScale, mFocalX, mFocalY);
+                setImageViewMatrix(getDrawMatrix());
+                ;
 
-            mSuppMatrix.postScale(deltaScale, deltaScale, mFocalX, mFocalY);
-            setImageViewMatrix(getDrawMatrix());
-            ;
-
-            // We haven't hit our target scale yet, so post ourselves again
-            if (t < 1f) {
-                Compat.postOnAnimation(KCExtraImageViewNewTopShower.this, this);
+                // We haven't hit our target scale yet, so post ourselves again
+                if (t < 1f) {
+                    Compat.postOnAnimation(KCExtraImageViewNewTopShower.this, this);
+                }
             }
         }
 
@@ -244,7 +258,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 //                    Log.e(TAG, "totalDegrees:" + totalDegrees);
                     Compat.postOnAnimation(KCExtraImageViewNewTopShower.this, this);
                 } else {
-                    if(mAnimatedRotationListener != null)
+                    if (mAnimatedRotationListener != null)
                         mAnimatedRotationListener.onAnimated();
                 }
             }
@@ -270,7 +284,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         /**
          * Callback for when the Matrix displaying the Drawable has changed. This could be because
          * the View's bounds have changed, or the user has zoomed.
-         *
          */
         void onAnimated();
     }
@@ -462,14 +475,12 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
 
     @Override
-    protected void onDraw(Canvas canvas)
-    {
-        if(isShadowable) {
+    protected void onDraw(Canvas canvas) {
+        if (isShadowable) {
 //            if (superOnDraw(canvas)) return; // couldn't resolve the URI
             drawShadow(canvas);
             super.onDraw(canvas);
-        }
-        else{
+        } else {
             super.onDraw(canvas);
         }
     }
@@ -487,14 +498,15 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     //    static final int SHADOW_PADDING_TOP = -10;
     static final float SHADOW_PADDING_HOR_PERCENT = 0.2f;
     static final int SHADOW_SIZE = 50;
+
     private void drawShadow(Canvas canvas) {
 
         RectF rectF = getDisplayRect();
         Rect rect = new Rect();
-        rect.top = (int)(rectF.top + rectF.bottom / 2);// + SHADOW_PADDING_TOP;
+        rect.top = (int) (rectF.top + rectF.bottom / 2);// + SHADOW_PADDING_TOP;
         rect.left = (int) (rectF.left);// + rectF.width() * SHADOW_PADDING_HOR_PERCENT);
-        rect.bottom = (int)rectF.bottom + SHADOW_SIZE;
-        rect.right = (int)(rectF.right);// - rectF.width() * SHADOW_PADDING_HOR_PERCENT);
+        rect.bottom = (int) rectF.bottom + SHADOW_SIZE;
+        rect.right = (int) (rectF.right);// - rectF.width() * SHADOW_PADDING_HOR_PERCENT);
 
         Paint mShadow = new Paint();
         mShadow.setColor(getResources().getColor(android.R.color.transparent));
@@ -503,6 +515,81 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
     }
 
+    float x, y;
+    AnimatedTranslateRunnable animatedTranslateRunnable = null;
+
+    public void setTranlate(float dX, float dY){
+        setTranlate(dX, dY, false);
+    }
+
+    public void setTranlate(float dX, float dY,
+                            boolean animate) {
+        if (animate) {
+            if (animatedTranslateRunnable != null)
+                animatedTranslateRunnable.stop();
+            post(new AnimatedTranslateRunnable(x, y,
+                    dX, dY));
+        } else {
+            mSuppMatrix.postTranslate(dX, dY);
+//            checkAndDisplayMatrix();
+            setImageViewMatrix(getDrawMatrix());
+        }
+        x = dX;
+        y = dY;
+    }
+
+
+    public class AnimatedTranslateRunnable implements Runnable {
+
+        private final float mFromX, mFromY;
+        private final long mStartTime;
+        private final float mToX, mToY;
+        boolean running = true;
+
+        public AnimatedTranslateRunnable(final float fromX, final float fromY,
+                                         final float toX, final float toY) {
+            mStartTime = System.currentTimeMillis();
+            mFromX = fromX;
+            mFromY = fromY;
+            mToX = toX;
+            mToY = toY;
+        }
+
+        public void stop() {
+            running = false;
+        }
+
+        @Override
+        public void run() {
+            if (running) {
+                float t = interpolate();
+                float x = mFromX + t * (mToX - mFromX);
+                float y = mFromY + t * (mToY - mFromY);
+
+                mSuppMatrix.postTranslate(x, y);
+                setImageViewMatrix(getDrawMatrix());
+
+                // We haven't hit our target scale yet, so post ourselves again
+                if (t < 1f) {
+                    Compat.postOnAnimation(KCExtraImageViewNewTopShower.this, this);
+                }
+            }
+        }
+
+        private float interpolate() {
+            float t = 1f * (System.currentTimeMillis() - mStartTime) / ZOOM_DURATION;
+            t = Math.min(1f, t);
+            t = sInterpolator.getInterpolation(t);
+            return t;
+        }
+    }
+
+
+    public static float distance(PointF fromP, PointF toP){
+        float dx = toP.x - fromP.x;
+        float dy = toP.y - fromP.y;
+        return FloatMath.sqrt(dx * dx + dy * dy);
+    }
 
     /**
      * 计算两点之间的距离
