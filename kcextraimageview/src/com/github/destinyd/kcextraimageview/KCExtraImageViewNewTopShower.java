@@ -53,7 +53,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
 
     protected static final Interpolator sInterpolator = new AccelerateDecelerateInterpolator();
-    private static final int DEFAULT_ZOOM_DURATION = 2000;
+    private static final int DEFAULT_ZOOM_DURATION = 1000;
     protected int ZOOM_DURATION = DEFAULT_ZOOM_DURATION;
 
     // These are set so we don't keep allocating them on the heap
@@ -163,7 +163,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
                     focalX, focalY);
             post(mCurrentAnimatedZoomRunnable);
         } else {
-            mSuppMatrix.postScale(scale, scale, focalX, focalY);
+            float toScale = scale / getScale();
+            mSuppMatrix.postScale(toScale, toScale, focalX, focalY);
             setImageViewMatrix(getDrawMatrix());
         }
     }
