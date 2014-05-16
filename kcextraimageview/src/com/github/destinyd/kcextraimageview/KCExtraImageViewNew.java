@@ -286,7 +286,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 //                                        Log.e(TAG, "turnAngel:" + turnAngle);
 //                                    }
                                     lastFingerAngle = currentFingerAngle;
-                                    imageViewTop.setPhotoViewRotation(turnAngle, false);
+                                    imageViewTop.setRotation(turnAngle, false);
                                 }
 
                             }
@@ -462,25 +462,39 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
     private void fall() {
         Log.e(TAG, "state:" + mState);
-        if(mState == STATE_FULLSCREEN || mState == STATE_SUSPENDED) {
+        if (mState == STATE_FULLSCREEN || mState == STATE_SUSPENDED) {
             Log.e(TAG, "fall");
-            mState = STATE_BACKING;
-            if (mActionMode == ACTION_MODE_ZOOM) {
-                anime_to_original();
-            } else if (mActionMode == ACTION_MODE_DRAG) {
-                move_to_original();
+            if (mState == STATE_SUSPENDED) {
+                if (mActionMode == ACTION_MODE_ZOOM) {
+                    anime_to_original();
+                } else if (mActionMode == ACTION_MODE_DRAG) {
+                    move_to_original();
+                }
+            } else {
+                fullscreen_to_original();
             }
+
         }
+    }
+
+    private void fullscreen_to_original() {
+        Log.e(TAG, "fullscreen_to_original");
+        mState = STATE_BACKING;
+        imageViewTop.setScale(scaleBase, true);
+        imageViewTop.moveToOrigin();
     }
 
     private void move_to_original() {
         Log.e(TAG, "move_to_original");
+        mState = STATE_BACKING;
         imageViewTop.moveToOrigin();
     }
 
 
     private void anime_to_original() {
-        imageViewTop.setPhotoViewRotation(-(float) currentFingerAngle, true);
+        Log.e(TAG, "anime_to_original");
+        mState = STATE_BACKING;
+        imageViewTop.rotationToOrigin(true);
         imageViewTop.setScale(scaleBase, true);
     }
 

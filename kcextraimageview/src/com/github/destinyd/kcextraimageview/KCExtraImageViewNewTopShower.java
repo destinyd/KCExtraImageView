@@ -175,6 +175,11 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         setTranslate(xBase - x, yBase - y, true, true);
     }
 
+    public void rotationToOrigin(boolean anime) {
+        Log.e(TAG, "getBackAngle():" + getBackAngle());
+        setRotation(getBackAngle(), anime);
+    }
+
     public class AnimatedZoomRunnable implements Runnable {
 
         private final float mFocalX, mFocalY;
@@ -228,9 +233,10 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
 
     AnimatedRotationRunnable runnableRotation = null;
+    float angle = 0;
 
-    public void setPhotoViewRotation(float degrees, boolean animate) {
-//        Log.e(TAG, "setPhotoViewRotation degrees:" + degrees);
+    public void setRotation(float degrees, boolean animate) {
+//        Log.e(TAG, "setRotation degrees:" + degrees);
         float targetAngle = degrees % 360;
         if (animate) {
             if (runnableRotation != null)
@@ -241,6 +247,30 @@ public class KCExtraImageViewNewTopShower extends ImageView {
             RectF rectF = getDisplayRect();
             mSuppMatrix.postRotate(targetAngle, rectF.centerX(), rectF.centerY());
             setImageViewMatrix(getDrawMatrix());
+            addAngle(targetAngle);
+        }
+    }
+
+    private void addAngle(float targetAngle) {
+        Log.e(TAG, "targetAngle:" + targetAngle);
+        angle = (angle + targetAngle) % 360;
+        Log.e(TAG, "angle" + angle);
+    }
+
+    public float getAngle() {
+        return angle;
+    }
+
+    public float getBackAngle(){
+        Log.e(TAG, "getBackAngle angle:" + angle);
+        if(Math.abs(angle) > 180){
+            if(angle > 0)
+                return angle - 360;
+            else
+                return angle + 360;
+        }
+        else{
+            return -angle;
         }
     }
 
@@ -281,6 +311,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
                 mSuppMatrix.postRotate(rotateDegrees, rectF.centerX(), rectF.centerY());
 //                setImageViewMatrix(getDrawMatrix());;
                 setImageViewMatrix(getDrawMatrix()); // not check
+                angle += rotateDegrees;
                 fromDegrees = t * degrees;
 
                 // We haven't hit our target scale yet, so post ourselves again

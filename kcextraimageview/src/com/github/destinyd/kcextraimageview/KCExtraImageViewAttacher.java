@@ -332,9 +332,9 @@ public class KCExtraImageViewAttacher extends PhotoViewAttacher implements Photo
         setScale(1, true);
         //怎么回0度。。
 //        if (currentAngle <= 180)
-//            setPhotoViewRotation(-(float) currentAngle, true);
+//            setRotation(-(float) currentAngle, true);
 //        else {
-//            setPhotoViewRotation((float) (360 - currentAngle), true);
+//            setRotation((float) (360 - currentAngle), true);
 //        }
     }
 
