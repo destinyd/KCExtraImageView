@@ -456,11 +456,8 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 //            imageViewTop.setBackgroundResource(android.R.color.transparent);
         }
 
-        if (frameLayoutTop != null) {
-            remove_top_shower();
-        }
-        setVisibility(VISIBLE);
-        mState = STATE_NORMAL;
+        imageViewTop.setVisibility(VISIBLE);
+        fall();
     }
 
     private void fall() {
