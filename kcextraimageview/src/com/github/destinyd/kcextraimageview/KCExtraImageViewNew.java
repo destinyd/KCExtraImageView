@@ -5,7 +5,6 @@ import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -26,6 +25,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         ViewTreeObserver.OnGlobalLayoutListener {
     private static final String TAG = "KCExtraImageViewNew";
     private static final float DISTANCE_TO_FULLSCREEN = 100;
+    private static final long OPEN_TIME = 1000; // 打开闲置时间1秒
     WindowManager windowManager;
 
     // These are set so we don't keep allocating them on the heap
@@ -260,7 +260,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
             case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
                 if(mState == STATE_SUSPENDED) {
                     if (mActionMode == ACTION_MODE_DRAG) {
-                        if (mState != STATE_FULLSCREEN) {
+                        if (mState == STATE_SUSPENDED) {
                             move(event);
                         }
                     } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
@@ -270,14 +270,14 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                             int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
 //                            Log.e(TAG, "endDis:" + endDis);
                             if (endDis > 10f) {
-                                float scale = imageViewTop.getScaleBase() * endDis / startDis;// 得到缩放倍数
+                                float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
 //                                Log.e(TAG, "startDis:" + startDis);
 //                                Log.e(TAG, "scaleBase:" + scaleBase);
 //                                Log.e(TAG, "scale:" + scale);
                                 //放大
 //                                Log.e(TAG, "scaleBase:" + scaleBase);
 //                                Log.e(TAG, "scale:" + scale);
-                                imageViewTop.setScale(scale, true);
+                                imageViewTop.setScale(scale, false);
                                 if (Math.abs(turnAngle) > 5) {
 
 //                                    if (currentFingerAngle != lastFingerAngle) {
@@ -301,7 +301,8 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                 break;
             case MotionEvent.ACTION_UP:// 手指离开屏
                 Log.e("onTouch", "ACTION_UP");
-                if (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM) {
+                long costTime = System.currentTimeMillis() - mStartOpen;
+                if (costTime > OPEN_TIME && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM)  ) {
                     fall();
                 }
                 mStateRunnable.stop();
@@ -360,19 +361,48 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         imageViewTop.setTranslate(distanceX, distanceY);
         currentPoint = newPoint;
         float dis = distance(startPoint, newPoint);
+        Log.e(TAG, "dis:" + dis);
         if (dis >= DISTANCE_TO_FULLSCREEN) {
             open();
         } else {
             float percent = dis / DISTANCE_TO_FULLSCREEN;
+            int alpha = (int)(percent * 255);
+            Log.e(TAG, "alpha:" + alpha);
 //            int backgroundColor = (int) (percent * 255) * 0x1000000;
 //            frameLayoutTop.setBackgroundColor(backgroundColor);
-            imageViewTop.setBackgroundAlpha((int) (percent * 255));
+            imageViewTop.setBackgroundAlpha(alpha);
         }
     }
 
+    long mStartOpen = 0;
     private void open() {
-        mState = STATE_FULLSCREEN;
-        open_full_screen();
+        imageViewTop.setAnimatedTranslateListener(new OnAnimatedListener() {
+            @Override
+            public void onAnimated() {
+                open_full_screen();
+                imageViewTop.setAnimatedTranslateListener(KCExtraImageViewNew.this);
+                mState = STATE_FULLSCREEN;
+            }
+        });
+        mStartOpen = System.currentTimeMillis();
+        mState = STATE_OPENING;
+
+        RectF rect = imageViewTop.getDisplayRect();
+        int left = imageViewTop.getPaddingLeft(), top = imageViewTop.getPaddingTop();
+        if(rect.width() / imageViewTop.getImageViewWidth() >  rect.height() / imageViewTop.getImageViewHeight()) {
+            top += (int) ((getImageViewHeight() - getDisplayRect().height()) / 2);
+        }
+        else{
+            left += (int) ((getImageViewWidth() - getDisplayRect().width()) / 2);
+        }
+
+        float fitScale = imageViewTop.getFitViewScale() * imageViewTop.getBaseScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
+//        Log.e(TAG, "left:" + left);
+//        Log.e(TAG, "top:" + top);
+//        Log.e(TAG, "imageViewTop.x:" + imageViewTop.x);
+//        Log.e(TAG, "imageViewTop.y:" + imageViewTop.y);
+        imageViewTop.setScale(fitScale, true);
+        imageViewTop.setTranslate(left - imageViewTop.x, top - imageViewTop.y, true);
     }
 
 
@@ -395,18 +425,21 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
             }
         });
 
-        // 获取WindowManager
-        WindowManager wm = (WindowManager) getContext().getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
-//        // 设置LayoutParams(全局变量）相关参数
-        WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-//        wmParams.type =  WindowManager.LayoutParams.TYPE_PHONE; // 设置window type
-        wmParams.format = PixelFormat.RGBA_8888; // 设置图片格式，效果为背景透明
-        // 设置Window flag
-        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-
-        wmParams.gravity = Gravity.CENTER;
-        wm.addView(mOpenView, wmParams);
+//        // 获取WindowManager
+//        WindowManager wm = (WindowManager) getContext().getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+////        // 设置LayoutParams(全局变量）相关参数
+//        WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+////        wmParams.type =  WindowManager.LayoutParams.TYPE_PHONE; // 设置window type
+//        wmParams.format = PixelFormat.RGBA_8888; // 设置图片格式，效果为背景透明
+//        // 设置Window flag
+//        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+//                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+//
+//        wmParams.gravity = Gravity.CENTER;
+//        wm.addView(mOpenView, wmParams);
+        imageViewTop.setVisibility(GONE);
+        if(frameLayoutTop != null)
+            frameLayoutTop.addView(mOpenView);
     }
 
 
@@ -418,7 +451,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
     private void close_open_image_view() {
         if (mOpenView != null) {
-            windowManager.removeView(mOpenView);
+            frameLayoutTop.removeView(mOpenView);
             mOpenView = null;
 //            imageViewTop.setBackgroundResource(android.R.color.transparent);
         }
@@ -431,6 +464,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     }
 
     private void fall() {
+        Log.e(TAG, "state:" + mState);
         if(mState == STATE_FULLSCREEN || mState == STATE_SUSPENDED) {
             Log.e(TAG, "fall");
             mState = STATE_BACKING;
@@ -443,6 +477,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     }
 
     private void move_to_original() {
+        Log.e(TAG, "move_to_original");
         imageViewTop.moveToOrigin();
     }
 
@@ -456,7 +491,8 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     static final int STATE_NORMAL = 0;
     static final int STATE_SUSPENDED = 1;
     static final int STATE_FULLSCREEN = 2;
-    static final int STATE_BACKING = 2;
+    static final int STATE_OPENING = 3;
+    static final int STATE_BACKING = 4;
 
     private void suspended() {
         Log.e(TAG, "suspended");

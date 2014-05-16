@@ -21,8 +21,8 @@ import com.github.destinyd.kcextraimageview.photoview.log.LogManager;
 public class KCExtraImageViewNewTopShower extends ImageView {
 
     private static final String TAG = "KCExtraImageViewNewTopShower";
-    public static final float DEFAULT_MAX_SCALE = 2.0f;
-    public static final float DEFAULT_MID_SCALE = 0.5f;
+    public static final float DEFAULT_MAX_SCALE = 4.0f;
+    public static final float DEFAULT_MID_SCALE = 1.0f;
     public static final float DEFAULT_MIN_SCALE = 0.1f;
     private float mMinScale = DEFAULT_MIN_SCALE;
     private float mMidScale = DEFAULT_MID_SCALE;
@@ -53,7 +53,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
 
     protected static final Interpolator sInterpolator = new AccelerateDecelerateInterpolator();
-    private static final int DEFAULT_ZOOM_DURATION = 200;
+    private static final int DEFAULT_ZOOM_DURATION = 2000;
     protected int ZOOM_DURATION = DEFAULT_ZOOM_DURATION;
 
     // These are set so we don't keep allocating them on the heap
@@ -115,7 +115,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
     private float scaleBase;
 
-    public float getScaleBase() {
+    public float getBaseScale() {
         return scaleBase;
     }
 
@@ -157,13 +157,13 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         }
 
         if (animate) {
+            if(mCurrentAnimatedZoomRunnable != null)
+                mCurrentAnimatedZoomRunnable.stop();
             mCurrentAnimatedZoomRunnable = new AnimatedZoomRunnable(getScale(), scale,
                     focalX, focalY);
-            mCurrentAnimatedZoomRunnable.stop();
-            post(new AnimatedZoomRunnable(getScale(), scale,
-                    focalX, focalY));
+            post(mCurrentAnimatedZoomRunnable);
         } else {
-            mSuppMatrix.setScale(scale, scale, focalX, focalY);
+            mSuppMatrix.postScale(scale, scale, focalX, focalY);
             setImageViewMatrix(getDrawMatrix());
         }
     }
@@ -171,7 +171,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     AnimatedZoomRunnable mCurrentAnimatedZoomRunnable = null;
 
     public void moveToOrigin() {
-        setTranslate(xBase - x, yBase - y, true);
+        setTranslate(xBase - x, yBase - y, true, true);
     }
 
     public class AnimatedZoomRunnable implements Runnable {
@@ -188,6 +188,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
             mStartTime = System.currentTimeMillis();
             mZoomStart = currentZoom;
             mZoomEnd = targetZoom;
+            Log.e(TAG, "currentZoom:" + currentZoom);
+            Log.e(TAG, "targetZoom:" + targetZoom);
         }
 
 
@@ -202,9 +204,11 @@ public class KCExtraImageViewNewTopShower extends ImageView {
                 float scale = mZoomStart + t * (mZoomEnd - mZoomStart);
                 float deltaScale = scale / getScale();
 
-                mSuppMatrix.postScale(deltaScale, deltaScale, mFocalX, mFocalY);
+//                Log.e(TAG, "x:" + x);
+//                Log.e(TAG, "y:" + y);
+//                mSuppMatrix.postScale(deltaScale, deltaScale, mFocalX, mFocalY);
+                mSuppMatrix.postScale(deltaScale, deltaScale, (getRight() - x) /2, (getBottom() - y) /2);
                 setImageViewMatrix(getDrawMatrix());
-                ;
 
                 // We haven't hit our target scale yet, so post ourselves again
                 if (t < 1f) {
@@ -544,15 +548,16 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     AnimatedTranslateRunnable animatedTranslateRunnable = null;
 
     public void setTranslate(float dX, float dY) {
-        setTranslate(dX, dY, false);
+        setTranslate(dX, dY, false, false);
     }
 
+    public void setTranslate(float dX, float dY, boolean animate){ setTranslate(dX, dY, animate, false);}
     public void setTranslate(float dX, float dY,
-                             boolean animate) {
+                             boolean animate, boolean changeAlpha) {
         if (animate) {
             if (animatedTranslateRunnable != null)
                 animatedTranslateRunnable.stop();
-            post(new AnimatedTranslateRunnable(dX, dY));
+            post(new AnimatedTranslateRunnable(dX, dY, changeAlpha));
         } else {
             mSuppMatrix.postTranslate(dX, dY);
 //            checkAndDisplayMatrix();
@@ -581,12 +586,14 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         boolean running = true;
         float lastT = 0;
         final int fromAlpha;
+        final boolean changeAlpha;
 
-        public AnimatedTranslateRunnable(final float dX, final float dY) {
+        public AnimatedTranslateRunnable(final float dX, final float dY, final boolean change) {
             mStartTime = System.currentTimeMillis();
             mDX = dX;
             mDY = dY;
             fromAlpha = alpha;
+            changeAlpha = change;
         }
 
         public void stop() {
@@ -604,12 +611,13 @@ public class KCExtraImageViewNewTopShower extends ImageView {
                 mSuppMatrix.postTranslate(x, y);
                 setImageViewMatrix(getDrawMatrix());
 
-                int toAlpha = (int)((1-t) * fromAlpha);
-                if(toAlpha < 0)
-                    toAlpha = 0;
-                int backgroundColor = toAlpha * 0x1000000;
-                mParent.setBackgroundColor(backgroundColor);
-
+                if(changeAlpha) {
+                    int toAlpha = (int) ((1 - t) * fromAlpha);
+                    if (toAlpha < 0)
+                        toAlpha = 0;
+                    int backgroundColor = toAlpha * 0x1000000;
+                    mParent.setBackgroundColor(backgroundColor);
+                }
                 lastT = t;
 
                 // We haven't hit our target scale yet, so post ourselves again
@@ -632,8 +640,22 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
     OnAnimatedListener mAnimatedTranslateListener = null;
 
+    public float getFitViewScale(){
+        float scale;
+        RectF rect = getDisplayRect();
+        float scaleX = getImageViewWidth() / rect.width();
+        float scaleY = getImageViewHeight() / rect.height();
+        scale = scaleX > scaleY ? scaleY : scaleX;
+
+        return scale;
+    }
+
     public void setAnimatedTranslateListener(OnAnimatedListener mAnimatedTranslateListener) {
         this.mAnimatedTranslateListener = mAnimatedTranslateListener;
+    }
+
+    public OnAnimatedListener getAnimatedTranslateListener() {
+        return mAnimatedTranslateListener;
     }
 
     public static float distance(PointF fromP, PointF toP) {
