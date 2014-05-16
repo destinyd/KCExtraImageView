@@ -639,6 +639,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
                 mSuppMatrix.postTranslate(x, y);
                 setImageViewMatrix(getDrawMatrix());
+                KCExtraImageViewNewTopShower.this.x += x;
+                KCExtraImageViewNewTopShower.this.y += y;
 
                 if(changeAlpha) {
                     int toAlpha = (int) ((1 - t) * fromAlpha);

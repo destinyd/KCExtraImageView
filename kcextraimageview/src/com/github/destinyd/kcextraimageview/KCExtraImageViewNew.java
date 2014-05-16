@@ -390,10 +390,10 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         RectF rect = imageViewTop.getDisplayRect();
         int left = imageViewTop.getPaddingLeft(), top = imageViewTop.getPaddingTop();
         if(rect.width() / imageViewTop.getImageViewWidth() >  rect.height() / imageViewTop.getImageViewHeight()) {
-            top += (int) ((getImageViewHeight() - getDisplayRect().height()) / 2);
+            top += (int) ((imageViewTop.getImageViewHeight() - getDisplayRect().height()) / 2);
         }
         else{
-            left += (int) ((getImageViewWidth() - getDisplayRect().width()) / 2);
+            left += (int) ((imageViewTop.getImageViewWidth() - getDisplayRect().width()) / 2);
         }
 
         float fitScale = imageViewTop.getFitViewScale() * imageViewTop.getBaseScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
