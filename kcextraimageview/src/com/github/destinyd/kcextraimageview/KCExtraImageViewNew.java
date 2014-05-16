@@ -5,6 +5,7 @@ import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -95,7 +96,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        if(true)
+        if(changed)
             initOnLayout();
     }
 
@@ -296,12 +297,14 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
             case MotionEvent.ACTION_CANCEL:
                 Log.e("onTouch", "ACTION_CANCEL");
+                mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_UP:// 手指离开屏
                 Log.e("onTouch", "ACTION_UP");
                 if (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM) {
                     fall();
                 }
+                mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
 //                Log.e(TAG, "ACTION_POINTER_UP");
@@ -428,12 +431,14 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     }
 
     private void fall() {
-        Log.e(TAG, "fall");
-        mState = STATE_BACKING;
-        if(mActionMode == ACTION_MODE_ZOOM) {
-            anime_to_original();
-        }else if(mActionMode == ACTION_MODE_DRAG){
-            move_to_original();
+        if(mState == STATE_FULLSCREEN || mState == STATE_SUSPENDED) {
+            Log.e(TAG, "fall");
+            mState = STATE_BACKING;
+            if (mActionMode == ACTION_MODE_ZOOM) {
+                anime_to_original();
+            } else if (mActionMode == ACTION_MODE_DRAG) {
+                move_to_original();
+            }
         }
     }
 
@@ -824,6 +829,20 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                     done = true;
                 }
             }
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasWindowFocus) {
+        super.onWindowFocusChanged(hasWindowFocus);
+        int status = hasWindowFocus ? VISIBLE : GONE;
+        if(!hasWindowFocus){
+            if(frameLayoutTop != null)
+                frameLayoutTop.setVisibility(status);
+            if(imageViewTop != null)
+                imageViewTop.setVisibility(status);
+            if(mOpenView != null)
+                mOpenView.setVisibility(status);
         }
     }
 }
