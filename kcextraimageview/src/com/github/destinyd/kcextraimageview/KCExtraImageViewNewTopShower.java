@@ -2,7 +2,6 @@ package com.github.destinyd.kcextraimageview;
 
 import android.content.Context;
 import android.graphics.*;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.FloatMath;
@@ -53,8 +52,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
 
     protected static final Interpolator sInterpolator = new AccelerateDecelerateInterpolator();
-    private static final int DEFAULT_ZOOM_DURATION = 1000;
-    protected int ZOOM_DURATION = DEFAULT_ZOOM_DURATION;
+    private static final int DEFAULT_DURATION = 1000;
+    protected int ZOOM_DURATION = DEFAULT_DURATION;
 
     // These are set so we don't keep allocating them on the heap
     protected final Matrix mBaseMatrix = new Matrix();
@@ -194,8 +193,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
             mStartTime = System.currentTimeMillis();
             mZoomStart = currentZoom;
             mZoomEnd = targetZoom;
-            Log.e(TAG, "currentZoom:" + currentZoom);
-            Log.e(TAG, "targetZoom:" + targetZoom);
         }
 
 
@@ -599,7 +596,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         }
     }
 
-    int alpha = 255;
+    int alpha = 0;
 
     FrameLayout mParent;
     public void setParent(FrameLayout frameLayout){

@@ -236,7 +236,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     private PointF midPoint;// 中间点
     private double lastFingerAngle;// 开始角度
     private double currentFingerAngle;// 开始角度
-    private long FLOAT_TIME = 500; // 0.5s
+    private long FLOAT_TIME = 100; // 0.5s
 
     StateRunnable mStateRunnable = null;
     @Override
@@ -302,7 +302,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
             case MotionEvent.ACTION_UP:// 手指离开屏
                 Log.e("onTouch", "ACTION_UP");
                 long costTime = System.currentTimeMillis() - mStartOpen;
-                if (costTime > OPEN_TIME && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM)  ) {
+                if (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM)  ) {
                     fall();
                 }
                 mStateRunnable.stop();
@@ -362,15 +362,15 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         currentPoint = newPoint;
         float dis = distance(startPoint, newPoint);
         Log.e(TAG, "dis:" + dis);
+
+        float percent = dis / DISTANCE_TO_FULLSCREEN;
+        int alpha = (int)(percent * 255);
+        if(alpha > 255)
+            alpha = 255;
+        Log.e(TAG, "alpha:" + alpha);
+        imageViewTop.setBackgroundAlpha(alpha);
         if (dis >= DISTANCE_TO_FULLSCREEN) {
             open();
-        } else {
-            float percent = dis / DISTANCE_TO_FULLSCREEN;
-            int alpha = (int)(percent * 255);
-            Log.e(TAG, "alpha:" + alpha);
-//            int backgroundColor = (int) (percent * 255) * 0x1000000;
-//            frameLayoutTop.setBackgroundColor(backgroundColor);
-            imageViewTop.setBackgroundAlpha(alpha);
         }
     }
 
