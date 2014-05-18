@@ -156,7 +156,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         }
 
         if (animate) {
-            if(mCurrentAnimatedZoomRunnable != null)
+            if (mCurrentAnimatedZoomRunnable != null)
                 mCurrentAnimatedZoomRunnable.stop();
             mCurrentAnimatedZoomRunnable = new AnimatedZoomRunnable(getScale(), scale,
                     focalX, focalY);
@@ -210,31 +210,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
                 float scale = mZoomStart + t * (mZoomEnd - mZoomStart);
                 float deltaScale = scale / getScale();
 
-                RectF rect = getDisplayRect();
-//                int left = (int)x + getPaddingLeft(), top = (int)y + getPaddingTop();
-//                if(rect.width() / getImageViewWidth() >  rect.height() / getImageViewHeight()) {
-//                    top += (int) ((getImageViewHeight() - getDisplayRect().height()) / 2);
-//                }
-//                else{
-//                    left += (int) ((imageViewTop.getImageViewWidth() - getDisplayRect().width()) / 2);
-//                }
-//
-//                float fitScale = imageViewTop.getFitViewScale() * imageViewTop.getBaseScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
-
-//                float midX =  (rect.right - rect.left) / 2;
-//                float midY =  (rect.bottom - rect.top) / 2;
-//                float midX =  x + getImageViewWidth() * getScale() / 2;
-//                float midY =  y + getBottom() * getScale() / 2;
-                float midX =  x;
-                float midY =  y;
-//                Log.e(TAG, "mFocalX:" + mFocalX);
-//                Log.e(TAG, "mFocalY:" + mFocalY);
-//                mSuppMatrix.postScale(deltaScale, deltaScale, mFocalX, mFocalY);
-//                mSuppMatrix.postScale(deltaScale, deltaScale, x + getRight() /2, y + getBottom() /2);
-                Log.e(TAG, "x:" + x);
-                Log.e(TAG, "y:" + y);
-                Log.e(TAG, "midX:" + midX);
-                Log.e(TAG, "midY:" + midY);
+                float midX = x;
+                float midY = y;
                 mSuppMatrix.postScale(deltaScale, deltaScale, midX, midY);
                 setImageViewMatrix(getDrawMatrix());
 
@@ -283,15 +260,14 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         return angle;
     }
 
-    public float getBackAngle(){
+    public float getBackAngle() {
         Log.e(TAG, "getBackAngle angle:" + angle);
-        if(Math.abs(angle) > 180){
-            if(angle > 0)
+        if (Math.abs(angle) > 180) {
+            if (angle > 0)
                 return angle - 360;
             else
                 return angle + 360;
-        }
-        else{
+        } else {
             return -angle;
         }
     }
@@ -556,7 +532,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         }
     }
 
-
     @Override
     protected void onDraw(Canvas canvas) {
         if (isShadowable) {
@@ -606,7 +581,10 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         setTranslate(dX, dY, false, false);
     }
 
-    public void setTranslate(float dX, float dY, boolean animate){ setTranslate(dX, dY, animate, false);}
+    public void setTranslate(float dX, float dY, boolean animate) {
+        setTranslate(dX, dY, animate, false);
+    }
+
     public void setTranslate(float dX, float dY,
                              boolean animate, boolean changeAlpha) {
         if (animate) {
@@ -625,9 +603,11 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     int alpha = 0;
 
     FrameLayout mParent;
-    public void setParent(FrameLayout frameLayout){
+
+    public void setParent(FrameLayout frameLayout) {
         mParent = frameLayout;
     }
+
     public void setBackgroundAlpha(int alpha) {
         int backgroundColor = alpha * 0x1000000;
         mParent.setBackgroundColor(backgroundColor);
@@ -668,7 +648,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
                 KCExtraImageViewNewTopShower.this.x += x;
                 KCExtraImageViewNewTopShower.this.y += y;
 
-                if(changeAlpha) {
+                if (changeAlpha) {
                     int toAlpha = (int) ((1 - t) * fromAlpha);
                     if (toAlpha < 0)
                         toAlpha = 0;
@@ -697,7 +677,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
     OnAnimatedListener mAnimatedTranslateListener = null;
 
-    public float getFitViewScale(){
+    public float getFitViewScale() {
         float scale;
         RectF rect = getDisplayRect();
         float scaleX = getImageViewWidth() / rect.width();

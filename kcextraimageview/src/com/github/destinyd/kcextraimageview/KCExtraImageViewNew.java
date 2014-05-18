@@ -78,7 +78,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
             observer.addOnGlobalLayoutListener(this);
     }
 
-    void initOnLayout(){
+    void initOnLayout() {
         RectF rect = getDisplayRect();
         if (rect == null)
             return;
@@ -96,7 +96,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        if(changed)
+        if (changed)
             initOnLayout();
     }
 
@@ -239,12 +239,13 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     private long FLOAT_TIME = 100; // 0.5s
 
     StateRunnable mStateRunnable = null;
+
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         boolean handled = false;
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:// 手指压下屏幕
-                if(mState == STATE_NORMAL) {
+                if (mState == STATE_NORMAL) {
                     Log.e(TAG, "ACTION_DOWN:");
                     startPoint.set(event.getX(), event.getY());
                     currentPoint.set(event.getX(), event.getY());
@@ -258,7 +259,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                 break;
 
             case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
-                if(mState == STATE_SUSPENDED) {
+                if (mState == STATE_SUSPENDED) {
                     if (mActionMode == ACTION_MODE_DRAG) {
                         if (mState == STATE_SUSPENDED) {
                             move(event);
@@ -302,7 +303,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
             case MotionEvent.ACTION_UP:// 手指离开屏
                 Log.e("onTouch", "ACTION_UP");
                 long costTime = System.currentTimeMillis() - mStartOpen;
-                if (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM)  ) {
+                if (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM)) {
                     fall();
                 }
                 mStateRunnable.stop();
@@ -321,7 +322,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
             case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
                 Log.e(TAG, "onTouch ACTION_POINTER_DOWN");
-                if(mState != STATE_SUSPENDED){
+                if (mState != STATE_SUSPENDED) {
                     mStateRunnable.stop();
                     suspended();
                     mActionMode = ACTION_MODE_ZOOM;
@@ -363,8 +364,8 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         float dis = distance(startPoint, newPoint);
 
         float percent = dis / DISTANCE_TO_FULLSCREEN;
-        int alpha = (int)(percent * 255);
-        if(alpha > 255)
+        int alpha = (int) (percent * 255);
+        if (alpha > 255)
             alpha = 255;
         imageViewTop.setBackgroundAlpha(alpha);
         if (dis >= DISTANCE_TO_FULLSCREEN) {
@@ -373,6 +374,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     }
 
     long mStartOpen = 0;
+
     private void open() {
         imageViewTop.setAnimatedTranslateListener(new OnAnimatedListener() {
             @Override
@@ -385,16 +387,22 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         mStartOpen = System.currentTimeMillis();
         mState = STATE_OPENING;
 
+        float fitScale = imageViewTop.getFitViewScale() * imageViewTop.getBaseScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
+
         RectF rect = imageViewTop.getDisplayRect();
-        int left = imageViewTop.getPaddingLeft(), top = imageViewTop.getPaddingTop();
-        if(rect.width() / imageViewTop.getImageViewWidth() >  rect.height() / imageViewTop.getImageViewHeight()) {
-            top += (int) ((imageViewTop.getImageViewHeight() - getDisplayRect().height()) / 2);
-        }
-        else{
-            left += (int) ((imageViewTop.getImageViewWidth() - getDisplayRect().width()) / 2);
+        int left = 0, top = 0;
+        if (rect.width() / frameLayoutTop.getWidth() > rect.height() / frameLayoutTop.getHeight()) {
+            top = (int) (
+                    frameLayoutTop.getHeight() -
+                            (frameLayoutTop.getWidth() * rect.height() / rect.width()) // 得到实际图片height
+            ) / 2;
+        } else if (rect.width() / frameLayoutTop.getWidth() < rect.height() / frameLayoutTop.getHeight()) {
+            left = (int) (
+                    frameLayoutTop.getWidth() -
+                            (frameLayoutTop.getHeight() * rect.width() / rect.height()) // 得到实际图片width
+            ) / 2;
         }
 
-        float fitScale = imageViewTop.getFitViewScale() * imageViewTop.getBaseScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
         imageViewTop.setScale(fitScale, true);
         imageViewTop.setTranslate(left - imageViewTop.x, top - imageViewTop.y, true);
     }
@@ -432,7 +440,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 //        wmParams.gravity = Gravity.CENTER;
 //        wm.addView(mOpenView, wmParams);
         imageViewTop.setVisibility(GONE);
-        if(frameLayoutTop != null)
+        if (frameLayoutTop != null)
             frameLayoutTop.addView(mOpenView);
     }
 
@@ -536,8 +544,8 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 //        Log.e(TAG, "getLocationOnScreen location[0]:" + location[0]);
 //        Log.e(TAG, "getLocationOnScreen location[1]:" + location[1]);
 
-        int leftImageView = location[0];// getAbsoluteLeft();
-        int topImageView = location[1] - actionBarHeight -statusBarHeight;
+        int leftImageView = location[0] + getPaddingLeft();// getAbsoluteLeft();
+        int topImageView = location[1] - actionBarHeight - statusBarHeight + getPaddingTop();
         frameLayoutTop = new FrameLayout(getContext());
         FrameLayout.LayoutParams layoutParamsImageViewInTopLayer = new FrameLayout.LayoutParams(widthTopLayer, heightTopLayer);
         layoutParamsImageViewInTopLayer.gravity = Gravity.TOP | Gravity.LEFT;
@@ -576,14 +584,13 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         mToperShowerScale = scaleY > scaleX ? scaleX : scaleY;
         imageViewTop.setScaleBase(mToperShowerScale);
         int left, top, fix;
-        if(mToperShowerScale == scaleX){
-            fix = (int)((getImageViewHeight() - getDisplayRect().height()) /2);
+        if (mToperShowerScale == scaleX) {
+            fix = (int) ((getImageViewHeight() - getDisplayRect().height()) / 2);
             left = leftImageView;
             top = topImageView + fix;// - getPaddingTop();// - getPaddingBottom();
-        }
-        else{
-            fix = (int)(getImageViewWidth() - getDisplayRect().width()) /2;
-            left = leftImageView  + fix;// - getPaddingRight();
+        } else {
+            fix = (int) (getImageViewWidth() - getDisplayRect().width()) / 2;
+            left = leftImageView + fix;// - getPaddingRight();
             top = topImageView;
         }
         imageViewTop.setLocationBase(left, top);
@@ -877,12 +884,12 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     public void onWindowFocusChanged(boolean hasWindowFocus) {
         super.onWindowFocusChanged(hasWindowFocus);
         int status = hasWindowFocus ? VISIBLE : GONE;
-        if(!hasWindowFocus){
-            if(frameLayoutTop != null)
+        if (!hasWindowFocus) {
+            if (frameLayoutTop != null)
                 frameLayoutTop.setVisibility(status);
-            if(imageViewTop != null)
+            if (imageViewTop != null)
                 imageViewTop.setVisibility(status);
-            if(mOpenView != null)
+            if (mOpenView != null)
                 mOpenView.setVisibility(status);
         }
     }
