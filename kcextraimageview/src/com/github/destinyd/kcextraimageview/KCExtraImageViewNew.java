@@ -361,13 +361,11 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         imageViewTop.setTranslate(distanceX, distanceY);
         currentPoint = newPoint;
         float dis = distance(startPoint, newPoint);
-        Log.e(TAG, "dis:" + dis);
 
         float percent = dis / DISTANCE_TO_FULLSCREEN;
         int alpha = (int)(percent * 255);
         if(alpha > 255)
             alpha = 255;
-        Log.e(TAG, "alpha:" + alpha);
         imageViewTop.setBackgroundAlpha(alpha);
         if (dis >= DISTANCE_TO_FULLSCREEN) {
             open();
@@ -397,10 +395,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         }
 
         float fitScale = imageViewTop.getFitViewScale() * imageViewTop.getBaseScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
-//        Log.e(TAG, "left:" + left);
-//        Log.e(TAG, "top:" + top);
-//        Log.e(TAG, "imageViewTop.x:" + imageViewTop.x);
-//        Log.e(TAG, "imageViewTop.y:" + imageViewTop.y);
         imageViewTop.setScale(fitScale, true);
         imageViewTop.setTranslate(left - imageViewTop.x, top - imageViewTop.y, true);
     }

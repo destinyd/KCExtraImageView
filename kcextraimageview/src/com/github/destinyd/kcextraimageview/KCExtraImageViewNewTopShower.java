@@ -138,8 +138,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     public void setScale(float scale, boolean animate) {
 //        Log.e(TAG, "setScale:" + scale);
         setScale(scale,
-                (getRight()) / 2,
-                (getBottom()) / 2,
+                x + (getRight()) / 2,
+                y + (getBottom()) / 2,
                 animate);
     }
 
@@ -185,6 +185,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         private final long mStartTime;
         private final float mZoomStart, mZoomEnd;
         boolean running = true;
+        final float imageViewHeight, imageViewWidth;
 
         public AnimatedZoomRunnable(final float currentZoom, final float targetZoom,
                                     final float focalX, final float focalY) {
@@ -193,6 +194,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
             mStartTime = System.currentTimeMillis();
             mZoomStart = currentZoom;
             mZoomEnd = targetZoom;
+            imageViewHeight = getImageViewHeight();
+            imageViewWidth = getImageViewWidth();
         }
 
 
@@ -207,10 +210,32 @@ public class KCExtraImageViewNewTopShower extends ImageView {
                 float scale = mZoomStart + t * (mZoomEnd - mZoomStart);
                 float deltaScale = scale / getScale();
 
-//                Log.e(TAG, "x:" + x);
-//                Log.e(TAG, "y:" + y);
+                RectF rect = getDisplayRect();
+//                int left = (int)x + getPaddingLeft(), top = (int)y + getPaddingTop();
+//                if(rect.width() / getImageViewWidth() >  rect.height() / getImageViewHeight()) {
+//                    top += (int) ((getImageViewHeight() - getDisplayRect().height()) / 2);
+//                }
+//                else{
+//                    left += (int) ((imageViewTop.getImageViewWidth() - getDisplayRect().width()) / 2);
+//                }
+//
+//                float fitScale = imageViewTop.getFitViewScale() * imageViewTop.getBaseScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
+
+//                float midX =  (rect.right - rect.left) / 2;
+//                float midY =  (rect.bottom - rect.top) / 2;
+//                float midX =  x + getImageViewWidth() * getScale() / 2;
+//                float midY =  y + getBottom() * getScale() / 2;
+                float midX =  x;
+                float midY =  y;
+//                Log.e(TAG, "mFocalX:" + mFocalX);
+//                Log.e(TAG, "mFocalY:" + mFocalY);
 //                mSuppMatrix.postScale(deltaScale, deltaScale, mFocalX, mFocalY);
-                mSuppMatrix.postScale(deltaScale, deltaScale, (getRight() - x) /2, (getBottom() - y) /2);
+//                mSuppMatrix.postScale(deltaScale, deltaScale, x + getRight() /2, y + getBottom() /2);
+                Log.e(TAG, "x:" + x);
+                Log.e(TAG, "y:" + y);
+                Log.e(TAG, "midX:" + midX);
+                Log.e(TAG, "midY:" + midY);
+                mSuppMatrix.postScale(deltaScale, deltaScale, midX, midY);
                 setImageViewMatrix(getDrawMatrix());
 
                 // We haven't hit our target scale yet, so post ourselves again
@@ -538,6 +563,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 //            if (superOnDraw(canvas)) return; // couldn't resolve the URI
             drawShadow(canvas);
             super.onDraw(canvas);
+
         } else {
             super.onDraw(canvas);
         }
