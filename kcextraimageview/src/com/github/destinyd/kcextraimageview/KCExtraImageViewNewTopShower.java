@@ -264,9 +264,9 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         Log.e(TAG, "getBackAngle angle:" + angle);
         if (Math.abs(angle) > 180) {
             if (angle > 0)
-                return angle - 360;
+                return 360 - angle;
             else
-                return angle + 360;
+                return -360 - angle;
         } else {
             return -angle;
         }
