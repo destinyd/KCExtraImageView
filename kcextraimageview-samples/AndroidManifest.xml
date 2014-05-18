@@ -21,7 +21,7 @@
         <activity android:name=".ExampleSimpleActivity"></activity>
         <activity android:name=".ExampleMultipleActivity"></activity>
         <activity android:name=".ExampleImagesActivity"></activity>
-        <activity android:name=".ExampleNewActivity"></activity>
+        <activity android:name=".ExampleSetDrawableActivity"></activity>
     </application>
 
 </manifest>

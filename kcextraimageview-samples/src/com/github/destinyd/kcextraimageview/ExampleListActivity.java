@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 
 public class ExampleListActivity extends Activity implements View.OnClickListener {
 
@@ -44,7 +43,7 @@ public class ExampleListActivity extends Activity implements View.OnClickListene
                 break;
             case R.id.button4:
 //                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-                startActivity(new Intent(this, ExampleNewActivity.class));
+                startActivity(new Intent(this, ExampleSetDrawableActivity.class));
                 break;
         }
     }

@@ -46,10 +46,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     public KCExtraImageViewNew(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init(context);
-        if (null != mPendingScaleType) {
-            setScaleType(mPendingScaleType);
-            mPendingScaleType = null;
-        }
+        initMatrix();
     }
 
     ScaleType mPendingScaleType = null;
@@ -71,22 +68,30 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
         windowManager = (WindowManager) context.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         setOnTouchListener(this);
-        resetMatrix();
-        setImageViewScaleTypeMatrix(this);
         ViewTreeObserver observer = getViewTreeObserver();
         if (null != observer)
             observer.addOnGlobalLayoutListener(this);
+        if (null != mPendingScaleType) {
+            setScaleType(mPendingScaleType);
+            mPendingScaleType = null;
+        }
+    }
+
+    private void initMatrix() {
+        resetMatrix();
+        setImageViewScaleTypeMatrix(this);
     }
 
     void initOnLayout() {
         RectF rect = getDisplayRect();
         if (rect == null)
             return;
-        float scaleX = (getWidth() - getPaddingLeft() - getPaddingRight()) / rect.width();
-        float scaleY = (getHeight() - getPaddingTop() - getPaddingBottom()) / rect.height();
-        scaleBase = scaleY > scaleX ? scaleX : scaleY;
-//        Log.e(TAG, "rect scaleX:" + scaleX);
-//        Log.e(TAG, "rect scaleY:" + scaleY);
+        if(rect.width() * getImageViewHeight() > rect.height() * getImageViewWidth()){//过宽
+            scaleBase = getImageViewWidth() / rect.width();
+        }
+        else{
+            scaleBase = getImageViewHeight() / rect.height();
+        }
 
         mSuppMatrix.setScale(scaleBase, scaleBase);
         setImageMatrix(getDrawMatrix());
@@ -96,8 +101,10 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        if (changed)
+        if (changed) {
             initOnLayout();
+            Log.e(TAG, "onLayout initOnLayout");
+        }
     }
 
     /**
@@ -210,15 +217,18 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         return mDrawMatrix;
     }
 
-    @Override
-    // setImageBitmap calls through to this method
-    public void setImageDrawable(Drawable drawable) {
-        super.setImageDrawable(drawable);
-    }
-
+//    @Override
+//    // setImageBitmap calls through to this method
+//    public void setImageDrawable(Drawable drawable) {
+//        super.setImageDrawable(drawable);
+////        init(getContext());
+//        Log.e(TAG, "setImageDrawable init initOnLayout");
+//    }
+//
     @Override
     public void setImageResource(int resId) {
         super.setImageResource(resId);
+        initMatrix();
     }
 
     @Override
@@ -242,6 +252,8 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        if(getDrawable() == null)
+            return false;
         boolean handled = false;
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:// 手指压下屏幕
@@ -577,14 +589,22 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
     private void initTopShowerLocationAndScale(int leftImageView, int topImageView) {
         RectF rectTop = imageViewTop.getDisplayRect();
-        if (rectTop == null)
+        boolean isTooWide = false;
+        if (rectTop == null) {
             return;
-        float scaleX = getImageViewWidth() / rectTop.width();
-        float scaleY = getImageViewHeight() / rectTop.height();
-        mToperShowerScale = scaleY > scaleX ? scaleX : scaleY;
+        }
+        if(rectTop.width() * getImageViewHeight() > rectTop.height() * getImageViewWidth())//too wide
+        {
+            mToperShowerScale = getImageViewWidth() / rectTop.width();
+            isTooWide = true;
+        }
+        else{
+            mToperShowerScale = getImageViewHeight() / rectTop.height();
+        }
+
         imageViewTop.setScaleBase(mToperShowerScale);
         int left, top, fix;
-        if (mToperShowerScale == scaleX) {
+        if (isTooWide) {
             fix = (int) ((getImageViewHeight() - getDisplayRect().height()) / 2);
             left = leftImageView;
             top = topImageView + fix;// - getPaddingTop();// - getPaddingBottom();
@@ -738,8 +758,10 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     @Override
     public void onGlobalLayout() {
 //        ImageView imageView = getImageView();
-//
-//        if (null != imageView) {
+        Drawable drawable = getDrawable();
+        if (null == drawable) {
+            return;
+        }
 //            if (mZoomEnabled) {
         final int top = getTop();
         final int right = getRight();

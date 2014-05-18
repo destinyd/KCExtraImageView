@@ -678,13 +678,13 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     OnAnimatedListener mAnimatedTranslateListener = null;
 
     public float getFitViewScale() {
-        float scale;
         RectF rect = getDisplayRect();
-        float scaleX = getImageViewWidth() / rect.width();
-        float scaleY = getImageViewHeight() / rect.height();
-        scale = scaleX > scaleY ? scaleY : scaleX;
-
-        return scale;
+        if(rect.width() * getImageViewHeight() > rect.height() * getImageViewWidth()){//过宽
+            return getImageViewWidth() / rect.width();
+        }
+        else{
+            return getImageViewHeight() / rect.height();
+        }
     }
 
     public void setAnimatedTranslateListener(OnAnimatedListener mAnimatedTranslateListener) {

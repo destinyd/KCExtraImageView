@@ -35,13 +35,13 @@
             android:layout_alignParentLeft="true"
             android:id="@+id/button3"/>
 
-    <!--<Button-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:text="new"-->
-            <!--android:gravity="center"-->
-            <!--android:layout_below="@+id/button3"-->
-            <!--android:layout_alignParentLeft="true"-->
-            <!--android:id="@+id/button4"-->
-            <!--/>-->
+    <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="setDrawable"
+            android:gravity="center"
+            android:layout_below="@+id/button3"
+            android:layout_alignParentLeft="true"
+            android:id="@+id/button4"
+            />
 </RelativeLayout>
