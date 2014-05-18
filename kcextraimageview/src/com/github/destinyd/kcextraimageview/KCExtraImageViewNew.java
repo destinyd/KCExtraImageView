@@ -217,20 +217,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         return mDrawMatrix;
     }
 
-//    @Override
-//    // setImageBitmap calls through to this method
-//    public void setImageDrawable(Drawable drawable) {
-//        super.setImageDrawable(drawable);
-////        init(getContext());
-//        Log.e(TAG, "setImageDrawable init initOnLayout");
-//    }
-//
-    @Override
-    public void setImageResource(int resId) {
-        super.setImageResource(resId);
-        initMatrix();
-    }
-
     @Override
     public void setImageURI(Uri uri) {
         super.setImageURI(uri);
