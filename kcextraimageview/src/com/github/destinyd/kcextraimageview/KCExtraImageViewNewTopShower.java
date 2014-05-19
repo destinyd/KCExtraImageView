@@ -136,7 +136,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
     public void setScale(float scale, boolean animate) {
-//        Log.e(TAG, "setScale:" + scale);
         setScale(scale,
                 x + (getRight()) / 2,
                 y + (getBottom()) / 2,
@@ -145,7 +144,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
     public void setScale(float scale, float focalX, float focalY,
                          boolean animate) {
-//        Log.e(TAG, "setScale:" + scale);
         // Check to see if the scale is within bounds
         if (scale < mMinScale || scale > mMaxScale) {
             LogManager
@@ -175,7 +173,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
     public void rotationToOrigin(boolean anime) {
-        Log.e(TAG, "getBackAngle():" + getBackAngle());
         setRotation(getBackAngle(), anime);
     }
 
@@ -235,7 +232,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     float angle = 0;
 
     public void setRotation(float degrees, boolean animate) {
-//        Log.e(TAG, "setRotation degrees:" + degrees);
         float targetAngle = degrees % 360;
         if (animate) {
             if (runnableRotation != null)
@@ -251,9 +247,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
     private void addAngle(float targetAngle) {
-        Log.e(TAG, "targetAngle:" + targetAngle);
         angle = (angle + targetAngle) % 360;
-        Log.e(TAG, "angle" + angle);
     }
 
     public float getAngle() {
@@ -261,7 +255,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
     public float getBackAngle() {
-        Log.e(TAG, "getBackAngle angle:" + angle);
         if (Math.abs(angle) > 180) {
             if (angle > 0)
                 return 360 - angle;
@@ -288,7 +281,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         public AnimatedRotationRunnable(final float degrees) {
             mStartTime = System.currentTimeMillis();
             this.degrees = degrees;
-//            Log.e(TAG, "degrees:" + degrees);
         }
 
         @Override
@@ -300,11 +292,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
                 rotateDegrees = t * degrees - fromDegrees;
                 totalDegrees += rotateDegrees;
 //                if (Math.abs(totalDegrees) > Math.abs(degrees)) {
-//                    Log.e(TAG, "totalDegrees:" + totalDegrees);
-//                    Log.e(TAG, "Math.abs(totalDegrees) > Math.abs(degrees)");
 //                    rotateDegrees = degrees - fromDegrees;
 //                }
-//                Log.e(TAG, "rotateDegrees:" + rotateDegrees);
                 RectF rectF = getDisplayRect();
                 mSuppMatrix.postRotate(rotateDegrees, rectF.centerX(), rectF.centerY());
 //                setImageViewMatrix(getDrawMatrix());;
@@ -314,7 +303,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
                 // We haven't hit our target scale yet, so post ourselves again
                 if (t < 1f && running) {
-//                    Log.e(TAG, "totalDegrees:" + totalDegrees);
                     Compat.postOnAnimation(KCExtraImageViewNewTopShower.this, this);
                 } else {
                     if (mAnimatedRotationListener != null)

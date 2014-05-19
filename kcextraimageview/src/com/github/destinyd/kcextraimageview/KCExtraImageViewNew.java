@@ -103,7 +103,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         super.onLayout(changed, left, top, right, bottom);
         if (changed) {
             initOnLayout();
-            Log.e(TAG, "onLayout initOnLayout");
         }
     }
 
@@ -244,7 +243,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:// 手指压下屏幕
                 if (mState == STATE_NORMAL) {
-                    Log.e(TAG, "ACTION_DOWN:");
                     startPoint.set(event.getX(), event.getY());
                     currentPoint.set(event.getX(), event.getY());
                     handled = true;
@@ -267,22 +265,13 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                             float endDis = distance(event);// 结束距离
                             currentFingerAngle = angle(event);
                             int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
-//                            Log.e(TAG, "endDis:" + endDis);
                             if (endDis > 10f) {
                                 float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
-//                                Log.e(TAG, "startDis:" + startDis);
-//                                Log.e(TAG, "scaleBase:" + scaleBase);
-//                                Log.e(TAG, "scale:" + scale);
                                 //放大
-//                                Log.e(TAG, "scaleBase:" + scaleBase);
-//                                Log.e(TAG, "scale:" + scale);
                                 imageViewTop.setScale(scale, false);
                                 if (Math.abs(turnAngle) > 5) {
 
 //                                    if (currentFingerAngle != lastFingerAngle) {
-//                                        Log.e(TAG, "currentFingerAngle:" + currentFingerAngle);
-//                                        Log.e(TAG, "lastFingerAngle:" + lastFingerAngle);
-//                                        Log.e(TAG, "turnAngel:" + turnAngle);
 //                                    }
                                     lastFingerAngle = currentFingerAngle;
                                     imageViewTop.setRotation(turnAngle, false);
@@ -295,11 +284,9 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                 break;
 
             case MotionEvent.ACTION_CANCEL:
-                Log.e("onTouch", "ACTION_CANCEL");
                 mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_UP:// 手指离开屏
-                Log.e("onTouch", "ACTION_UP");
                 long costTime = System.currentTimeMillis() - mStartOpen;
                 if (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM)) {
                     fall();
@@ -307,19 +294,14 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
                 mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
-//                Log.e(TAG, "ACTION_POINTER_UP");
-////                Log.e(TAG, "event.getPointerCount():" + event.getPointerCount());
 //                if (event.getPointerCount() == 2) {
-//                    Log.e(TAG, "onTouch to ACTION_MODE_DRAG");
 //                    mActionMode = ACTION_MODE_DRAG;
 //                } else if (event.getPointerCount() <= 1) {
-//                    Log.e(TAG, "onTouch to ACTION_MODE_NONE");
 //                    mActionMode = ACTION_MODE_NONE;
 //                }
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
-                Log.e(TAG, "onTouch ACTION_POINTER_DOWN");
                 if (mState != STATE_SUSPENDED) {
                     mStateRunnable.stop();
                     suspended();
@@ -353,7 +335,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
 
     private void move(MotionEvent event) {
-//        Log.e(TAG, "move");
         PointF newPoint = new PointF(event.getX(), event.getY());
         float distanceX = newPoint.x - currentPoint.x;
         float distanceY = newPoint.y - currentPoint.y;
@@ -414,7 +395,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     private PhotoView mOpenView = null;
 
     private void create_open_image_view() {
-        Log.e(TAG, "create_open_image_view");
         mOpenView = new PhotoView(getContext());
         mOpenView.setBackgroundColor(Color.BLACK);
         mOpenView.setImageDrawable(getDrawable());
@@ -461,9 +441,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     }
 
     private void fall() {
-        Log.e(TAG, "state:" + mState);
         if (mState == STATE_FULLSCREEN || mState == STATE_SUSPENDED) {
-            Log.e(TAG, "fall");
             if (mState == STATE_SUSPENDED) {
                 if (mActionMode == ACTION_MODE_ZOOM) {
                     anime_to_original();
@@ -478,21 +456,18 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     }
 
     private void fullscreen_to_original() {
-        Log.e(TAG, "fullscreen_to_original");
         mState = STATE_BACKING;
         imageViewTop.setScale(scaleBase, true);
         imageViewTop.moveToOrigin();
     }
 
     private void move_to_original() {
-        Log.e(TAG, "move_to_original");
         mState = STATE_BACKING;
         imageViewTop.moveToOrigin();
     }
 
 
     private void anime_to_original() {
-        Log.e(TAG, "anime_to_original");
         mState = STATE_BACKING;
         imageViewTop.rotationToOrigin(true);
         imageViewTop.setScale(scaleBase, true);
@@ -506,7 +481,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
     static final int STATE_BACKING = 4;
 
     private void suspended() {
-        Log.e(TAG, "suspended");
         mState = STATE_SUSPENDED;
         create_top_shower();
         setVisibility(INVISIBLE);
@@ -531,16 +505,12 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 
 
         wmParams.gravity = Gravity.TOP | Gravity.LEFT;
-//        Log.e(TAG, "actionBarHeight:" + actionBarHeight);
-//        Log.e(TAG, "statusBarHeight:" + statusBarHeight);
         wmParams.y = actionBarHeight + statusBarHeight;
         wmParams.width = widthTopLayer;
         wmParams.height = heightTopLayer;
 
         int[] location = new int[2];
         getLocationOnScreen(location);
-//        Log.e(TAG, "getLocationOnScreen location[0]:" + location[0]);
-//        Log.e(TAG, "getLocationOnScreen location[1]:" + location[1]);
 
         int leftImageView = location[0] + getPaddingLeft();// getAbsoluteLeft();
         int topImageView = location[1] - actionBarHeight - statusBarHeight + getPaddingTop();
@@ -615,15 +585,6 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
 //        imageViewTop.checkAndDisplayMatrix();
 //        imageViewTop.s
 
-//        Log.e(TAG, "mSuppMatrix.setTranslate(leftImageView, topImageView):");
-//        Log.e(TAG, "leftImageView:" + leftImageView);
-//        Log.e(TAG, "topImageView:" + topImageView);
-//        Log.e(TAG, "rect.width():" + rectTop.width());
-//        Log.e(TAG, "rect.height():" + rectTop.height());
-//        Log.e(TAG, "getWidth():" + getWidth());
-//        Log.e(TAG, "getHeight():" + getHeight());
-//        Log.e(TAG, "scaleX:" + scaleX);
-//        Log.e(TAG, "scaleY:" + scaleY);
     }
 
     private void initTopestShower() {
@@ -661,10 +622,7 @@ public class KCExtraImageViewNew extends ImageView implements View.OnTouchListen
         int top = 0;
         ViewGroup parent = (ViewGroup) getParent();
         View obj = this;
-        Log.e(TAG, "content id:" + android.R.id.content);
         do {
-            Log.e(TAG, "parent class:" + parent.getClass().getName());
-            Log.e(TAG, "parent.getId():" + parent.getId());
             top += obj.getTop();
             obj = parent;
             parent = (ViewGroup) parent.getParent();
