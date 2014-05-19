@@ -5,7 +5,6 @@ import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.FloatMath;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
@@ -17,7 +16,7 @@ import com.github.destinyd.kcextraimageview.photoview.log.LogManager;
 /**
  * Created by dd on 14-5-14.
  */
-public class KCExtraImageViewNewTopShower extends ImageView {
+public class KCExtraImageViewTopShower extends ImageView {
 
     private static final String TAG = "KCExtraImageViewNewTopShower";
     public static final float DEFAULT_MAX_SCALE = 4.0f;
@@ -28,25 +27,25 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     private float mMaxScale = DEFAULT_MAX_SCALE;
     private boolean isShadowable;
 
-    public KCExtraImageViewNewTopShower(Context context) {
+    public KCExtraImageViewTopShower(Context context) {
         this(context, null);
     }
 
-    public KCExtraImageViewNewTopShower(Context context, AttributeSet attrs) {
+    public KCExtraImageViewTopShower(Context context, AttributeSet attrs) {
         this(context, null, 0);
     }
 
-    public KCExtraImageViewNewTopShower(Context context, AttributeSet attrs, int defStyle) {
+    public KCExtraImageViewTopShower(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
-    KCExtraImageViewNew fromImageView;
+    KCExtraImageView fromImageView;
 
-    public KCExtraImageViewNew getFromImageView() {
+    public KCExtraImageView getFromImageView() {
         return fromImageView;
     }
 
-    public void setFromImageView(KCExtraImageViewNew fromImageView) {
+    public void setFromImageView(KCExtraImageView fromImageView) {
         this.fromImageView = fromImageView;
     }
 
@@ -214,7 +213,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
                 // We haven't hit our target scale yet, so post ourselves again
                 if (t < 1f) {
-                    Compat.postOnAnimation(KCExtraImageViewNewTopShower.this, this);
+                    Compat.postOnAnimation(KCExtraImageViewTopShower.this, this);
                 }
             }
         }
@@ -286,24 +285,19 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         @Override
         public void run() {
             if (running) {
-//                ImageView imageView = getImageView();
                 float t = interpolate();
 
                 rotateDegrees = t * degrees - fromDegrees;
                 totalDegrees += rotateDegrees;
-//                if (Math.abs(totalDegrees) > Math.abs(degrees)) {
-//                    rotateDegrees = degrees - fromDegrees;
-//                }
                 RectF rectF = getDisplayRect();
                 mSuppMatrix.postRotate(rotateDegrees, rectF.centerX(), rectF.centerY());
-//                setImageViewMatrix(getDrawMatrix());;
                 setImageViewMatrix(getDrawMatrix()); // not check
                 angle += rotateDegrees;
                 fromDegrees = t * degrees;
 
                 // We haven't hit our target scale yet, so post ourselves again
                 if (t < 1f && running) {
-                    Compat.postOnAnimation(KCExtraImageViewNewTopShower.this, this);
+                    Compat.postOnAnimation(KCExtraImageViewTopShower.this, this);
                 } else {
                     if (mAnimatedRotationListener != null)
                         mAnimatedRotationListener.onAnimated();
@@ -340,8 +334,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     }
 
     public void update() {
-//        if (mZoomEnabled) {
-        if (true) {
+        if (true) {// if drawable not change
             // Make sure we using MATRIX Scale Type
             setImageViewScaleTypeMatrix(this);
 
@@ -523,7 +516,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
     @Override
     protected void onDraw(Canvas canvas) {
         if (isShadowable) {
-//            if (superOnDraw(canvas)) return; // couldn't resolve the URI
             drawShadow(canvas);
             super.onDraw(canvas);
 
@@ -540,10 +532,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
         this.isShadowable = isShadowable;
     }
 
-    private Matrix mMatrix;
-    private Paint mPaint;
-    //    static final int SHADOW_PADDING_TOP = -10;
-    static final float SHADOW_PADDING_HOR_PERCENT = 0.2f;
     static final int SHADOW_SIZE = 50;
 
     private void drawShadow(Canvas canvas) {
@@ -581,7 +569,6 @@ public class KCExtraImageViewNewTopShower extends ImageView {
             post(new AnimatedTranslateRunnable(dX, dY, changeAlpha));
         } else {
             mSuppMatrix.postTranslate(dX, dY);
-//            checkAndDisplayMatrix();
             setImageViewMatrix(getDrawMatrix());
             x += dX;
             y += dY;
@@ -633,8 +620,8 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
                 mSuppMatrix.postTranslate(x, y);
                 setImageViewMatrix(getDrawMatrix());
-                KCExtraImageViewNewTopShower.this.x += x;
-                KCExtraImageViewNewTopShower.this.y += y;
+                KCExtraImageViewTopShower.this.x += x;
+                KCExtraImageViewTopShower.this.y += y;
 
                 if (changeAlpha) {
                     int toAlpha = (int) ((1 - t) * fromAlpha);
@@ -647,7 +634,7 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
                 // We haven't hit our target scale yet, so post ourselves again
                 if (t < 1f) {
-                    Compat.postOnAnimation(KCExtraImageViewNewTopShower.this, this);
+                    Compat.postOnAnimation(KCExtraImageViewTopShower.this, this);
                 } else {
                     if (mAnimatedTranslateListener != null)
                         mAnimatedTranslateListener.onAnimated();
@@ -667,10 +654,9 @@ public class KCExtraImageViewNewTopShower extends ImageView {
 
     public float getFitViewScale() {
         RectF rect = getDisplayRect();
-        if(rect.width() * getImageViewHeight() > rect.height() * getImageViewWidth()){//过宽
+        if (rect.width() * getImageViewHeight() > rect.height() * getImageViewWidth()) {//过宽
             return getImageViewWidth() / rect.width();
-        }
-        else{
+        } else {
             return getImageViewHeight() / rect.height();
         }
     }

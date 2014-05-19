@@ -9,7 +9,7 @@
             android:layout_height="40dp"
             android:text="上部按钮，位于图下"
             android:id="@+id/button" android:layout_alignParentTop="true"/>
-    <com.github.destinyd.kcextraimageview.KCExtraImageViewNew
+    <com.github.destinyd.kcextraimageview.KCExtraImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/iv_image"

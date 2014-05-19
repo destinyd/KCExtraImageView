@@ -5,7 +5,7 @@
         >
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content">
 
-        <com.github.destinyd.kcextraimageview.KCExtraImageViewNew
+        <com.github.destinyd.kcextraimageview.KCExtraImageView
                 android:layout_width="200dp"
                 android:layout_height="200dp"
                 android:id="@+id/iv_image1"
@@ -13,7 +13,7 @@
                 />
 
 
-        <com.github.destinyd.kcextraimageview.KCExtraImageViewNew
+        <com.github.destinyd.kcextraimageview.KCExtraImageView
                 android:layout_width="200dp"
                 android:layout_height="200dp"
                 android:id="@+id/iv_image2"
@@ -24,7 +24,7 @@
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content">
 
-        <com.github.destinyd.kcextraimageview.KCExtraImageViewNew
+        <com.github.destinyd.kcextraimageview.KCExtraImageView
                 android:layout_width="200dp"
                 android:layout_height="200dp"
                 android:id="@+id/iv_image3"
@@ -32,7 +32,7 @@
                 />
 
 
-        <com.github.destinyd.kcextraimageview.KCExtraImageViewNew
+        <com.github.destinyd.kcextraimageview.KCExtraImageView
                 android:layout_width="200dp"
                 android:layout_height="200dp"
                 android:id="@+id/iv_image4"

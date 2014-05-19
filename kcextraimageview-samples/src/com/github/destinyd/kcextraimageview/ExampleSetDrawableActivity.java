@@ -5,15 +5,15 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 public class ExampleSetDrawableActivity extends Activity {
-    KCExtraImageViewNew iv_image1, iv_image2, iv_image3, iv_image4;
+    KCExtraImageView iv_image1, iv_image2, iv_image3, iv_image4;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.example_new);
-        iv_image1 = (KCExtraImageViewNew) findViewById(R.id.iv_image1);
-        iv_image2 = (KCExtraImageViewNew) findViewById(R.id.iv_image2);
-        iv_image3 = (KCExtraImageViewNew) findViewById(R.id.iv_image3);
-        iv_image4 = (KCExtraImageViewNew) findViewById(R.id.iv_image4);
+        iv_image1 = (KCExtraImageView) findViewById(R.id.iv_image1);
+        iv_image2 = (KCExtraImageView) findViewById(R.id.iv_image2);
+        iv_image3 = (KCExtraImageView) findViewById(R.id.iv_image3);
+        iv_image4 = (KCExtraImageView) findViewById(R.id.iv_image4);
         iv_image1.setImageResource(R.drawable.test);
         iv_image2.setImageResource(R.drawable.test1);
         iv_image3.setImageResource(R.drawable.test1);
