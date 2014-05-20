@@ -768,4 +768,12 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                 mOpenView.setVisibility(status);
         }
     }
+
+    public int getDuration() {
+        return imageViewTop.DURATION;
+    }
+
+    public void setDuration(int Duration) {
+        imageViewTop.DURATION = Duration;
+    }
 }

@@ -52,7 +52,7 @@ public class KCExtraImageViewTopShower extends ImageView {
 
     protected static final Interpolator sInterpolator = new AccelerateDecelerateInterpolator();
     private static final int DEFAULT_DURATION = 1000;
-    protected int ZOOM_DURATION = DEFAULT_DURATION;
+    protected int DURATION = DEFAULT_DURATION;
 
     // These are set so we don't keep allocating them on the heap
     protected final Matrix mBaseMatrix = new Matrix();
@@ -219,7 +219,7 @@ public class KCExtraImageViewTopShower extends ImageView {
         }
 
         private float interpolate() {
-            float t = 1f * (System.currentTimeMillis() - mStartTime) / ZOOM_DURATION;
+            float t = 1f * (System.currentTimeMillis() - mStartTime) / DURATION;
             t = Math.min(1f, t);
             t = sInterpolator.getInterpolation(t);
             return t;
@@ -306,7 +306,7 @@ public class KCExtraImageViewTopShower extends ImageView {
         }
 
         private float interpolate() {
-            float t = 1f * (System.currentTimeMillis() - mStartTime) / ZOOM_DURATION;
+            float t = 1f * (System.currentTimeMillis() - mStartTime) / DURATION;
             t = Math.min(1f, t);
             t = sInterpolator.getInterpolation(t);
             return t;
@@ -643,7 +643,7 @@ public class KCExtraImageViewTopShower extends ImageView {
         }
 
         private float interpolate() {
-            float t = 1f * (System.currentTimeMillis() - mStartTime) / ZOOM_DURATION;
+            float t = 1f * (System.currentTimeMillis() - mStartTime) / DURATION;
             t = Math.min(1f, t);
             t = sInterpolator.getInterpolation(t);
             return t;
