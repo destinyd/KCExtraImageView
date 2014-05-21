@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.*;
 import android.widget.FrameLayout;
@@ -238,6 +239,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         if (getDrawable() == null)
             return false;
         boolean handled = false;
+        long costTime;
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:// 手指压下屏幕
                 if (mState == STATE_NORMAL) {
@@ -248,34 +250,32 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                         mStateRunnable.stop();
                     mStateRunnable = new StateRunnable(FLOAT_TIME);
                     mStateRunnable.run();
-                    mActionMode = ACTION_MODE_DRAG;
                 }
                 break;
 
             case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
                 if (mState == STATE_SUSPENDED) {
                     if (mActionMode == ACTION_MODE_DRAG) {
-                        if (mState == STATE_SUSPENDED) {
-                            move(event);
-                        }
+                        move(event);
                     } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
                         if (event.getPointerCount() >= 2) {
+                            Log.e(TAG, "ACTION_MOVE ACTION_MODE_ZOOM");
                             float endDis = distance(event);// 结束距离
                             currentFingerAngle = angle(event);
                             int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
-                            if (endDis > 10f) {
+//                            if (endDis > 10f) {
                                 float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
                                 //放大
                                 imageViewTop.setScale(scale, false);
-                                if (Math.abs(turnAngle) > 5) {
+//                                if (Math.abs(turnAngle) > 5) {
 
 //                                    if (currentFingerAngle != lastFingerAngle) {
 //                                    }
                                     lastFingerAngle = currentFingerAngle;
                                     imageViewTop.setRotation(turnAngle, false);
-                                }
+//                                }
 
-                            }
+//                            }
                         }
                     }
                 }
@@ -285,25 +285,32 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                 mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_UP:// 手指离开屏
-                long costTime = System.currentTimeMillis() - mStartOpen;
+                costTime = System.currentTimeMillis() - mStartOpen;
                 if (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM)) {
                     fall();
                 }
                 mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
-//                if (event.getPointerCount() == 2) {
-//                    mActionMode = ACTION_MODE_DRAG;
-//                } else if (event.getPointerCount() <= 1) {
-//                    mActionMode = ACTION_MODE_NONE;
-//                }
+                costTime = System.currentTimeMillis() - mStartOpen;
+                if (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM) && imageViewTop != null) {
+                    if(imageViewTop.getScale() <= imageViewTop.getBaseScale()) {
+                        Log.e(TAG, "ACTION_POINTER_UP fall");
+                        fall();
+                    }
+                    else{
+                        Log.e(TAG, "ACTION_POINTER_UP open");
+                        open();
+                    }
+                }
+                mStateRunnable.stop();
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
-                if (mState != STATE_SUSPENDED) {
+                if (mState != STATE_SUSPENDED && mState != STATE_BACKING) {
                     mStateRunnable.stop();
-                    suspended();
                     mActionMode = ACTION_MODE_ZOOM;
+                    suspended();
                     startDis = distance(event);
                     lastFingerAngle = angle(event);
                     currentFingerAngle = lastFingerAngle;
@@ -353,6 +360,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     long mStartOpen = 0;
 
     private void open() {
+        mState = STATE_OPENING;
         imageViewTop.setAnimatedTranslateListener(new OnAnimatedListener() {
             @Override
             public void onAnimated() {
@@ -362,9 +370,11 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
             }
         });
         mStartOpen = System.currentTimeMillis();
-        mState = STATE_OPENING;
 
-        float fitScale = imageViewTop.getFitViewScale() * imageViewTop.getBaseScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
+        Log.e(TAG, "imageViewTop.getScaleFull():"  +  imageViewTop.getScaleFull());
+        Log.e(TAG, "imageViewTop.getBaseScale():"  +  imageViewTop.getBaseScale());
+        Log.e(TAG, "imageViewTop.getScale():"  +  imageViewTop.getScale());
+        float fitScale = imageViewTop.getScaleFull() * imageViewTop.getBaseScale();// / imageViewTop.getScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
 
         RectF rect = imageViewTop.getDisplayRect();
         int left = 0, top = 0;
@@ -379,8 +389,10 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                             (frameLayoutTop.getHeight() * rect.width() / rect.height()) // 得到实际图片width
             ) / 2;
         }
+        Log.e(TAG, "fitScale:" + fitScale);
 
         imageViewTop.setScale(fitScale, true);
+        imageViewTop.setRotation(imageViewTop.getBackAngle(), true);
         imageViewTop.setTranslate(left - imageViewTop.x, top - imageViewTop.y, true);
     }
 
@@ -428,7 +440,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     }
 
     private void close_open_image_view() {
-        if (mOpenView != null) {
+        if (mOpenView != null && frameLayoutTop != null) {
             frameLayoutTop.removeView(mOpenView);
             mOpenView = null;
 //            imageViewTop.setBackgroundResource(android.R.color.transparent);
@@ -441,10 +453,8 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     private void fall() {
         if (mState == STATE_FULLSCREEN || mState == STATE_SUSPENDED) {
             if (mState == STATE_SUSPENDED) {
-                if (mActionMode == ACTION_MODE_ZOOM) {
+                if (mActionMode == ACTION_MODE_ZOOM || mActionMode == ACTION_MODE_DRAG) {
                     anime_to_original();
-                } else if (mActionMode == ACTION_MODE_DRAG) {
-                    move_to_original();
                 }
             } else {
                 fullscreen_to_original();
@@ -458,15 +468,15 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         imageViewTop.setScale(scaleBase, true);
         imageViewTop.moveToOrigin();
     }
-
-    private void move_to_original() {
-        mState = STATE_BACKING;
-        imageViewTop.moveToOrigin();
-    }
-
+//
+//    private void move_to_original() {
+//        mState = STATE_BACKING;
+//        imageViewTop.moveToOrigin();
+//    }
 
     private void anime_to_original() {
         mState = STATE_BACKING;
+        imageViewTop.moveToOrigin();
         imageViewTop.rotationToOrigin(true);
         imageViewTop.setScale(scaleBase, true);
     }
@@ -748,6 +758,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                 if (t < mDuration) {
                     post(this);
                 } else {
+                    mActionMode = ACTION_MODE_DRAG;
                     suspended();
                     done = true;
                 }

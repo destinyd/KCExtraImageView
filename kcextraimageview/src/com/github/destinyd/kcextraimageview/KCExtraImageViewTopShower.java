@@ -5,6 +5,7 @@ import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.FloatMath;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
@@ -19,9 +20,9 @@ import com.github.destinyd.kcextraimageview.photoview.log.LogManager;
 public class KCExtraImageViewTopShower extends ImageView {
 
     private static final String TAG = "KCExtraImageViewNewTopShower";
-    public static final float DEFAULT_MAX_SCALE = 4.0f;
+    public static final float DEFAULT_MAX_SCALE = 10.0f;
     public static final float DEFAULT_MID_SCALE = 1.0f;
-    public static final float DEFAULT_MIN_SCALE = 0.1f;
+    public static final float DEFAULT_MIN_SCALE = 0.0f;
     private float mMinScale = DEFAULT_MIN_SCALE;
     private float mMidScale = DEFAULT_MID_SCALE;
     private float mMaxScale = DEFAULT_MAX_SCALE;
@@ -111,7 +112,8 @@ public class KCExtraImageViewTopShower extends ImageView {
         return mMatrixValues[whichValue];
     }
 
-    private float scaleBase;
+    private float scaleBase;//常规图时大小
+    private float scaleFull;
 
     public float getBaseScale() {
         return scaleBase;
@@ -120,6 +122,10 @@ public class KCExtraImageViewTopShower extends ImageView {
     public void setScaleBase(float scale) {
         scaleBase = scale;
         setScale(scaleBase);
+    }
+
+    public float getScaleFull() {
+        return scaleFull;
     }
 
     int xBase, yBase;
@@ -160,7 +166,8 @@ public class KCExtraImageViewTopShower extends ImageView {
             post(mCurrentAnimatedZoomRunnable);
         } else {
             float toScale = scale / getScale();
-            mSuppMatrix.postScale(toScale, toScale, focalX, focalY);
+//            mSuppMatrix.postScale(toScale, toScale, focalX, focalY);
+            mSuppMatrix.postScale(toScale, toScale, x, y);
             setImageViewMatrix(getDrawMatrix());
         }
     }
@@ -667,6 +674,15 @@ public class KCExtraImageViewTopShower extends ImageView {
 
     public OnAnimatedListener getAnimatedTranslateListener() {
         return mAnimatedTranslateListener;
+    }
+
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        if (changed) {
+            scaleFull = getFitViewScale();// * scaleBase;
+        }
     }
 
     public static float distance(PointF fromP, PointF toP) {
