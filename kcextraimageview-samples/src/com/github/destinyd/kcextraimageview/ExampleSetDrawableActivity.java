@@ -20,7 +20,6 @@ public class ExampleSetDrawableActivity extends Activity {
 
         Drawable test1 = getResources().getDrawable( R.drawable.test );
         iv_image4.setImageDrawable(test1);
-
     }
 }
 

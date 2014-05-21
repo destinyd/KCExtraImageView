@@ -449,7 +449,6 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
             } else {
                 fullscreen_to_original();
             }
-
         }
     }
 
@@ -615,6 +614,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         if (mState == STATE_BACKING) {
             remove_top_shower();
             setVisibility(VISIBLE);
+            KCTopestHookLayer.getFactory(getContext()).unhook();
             mState = STATE_NORMAL;
         }
     }
