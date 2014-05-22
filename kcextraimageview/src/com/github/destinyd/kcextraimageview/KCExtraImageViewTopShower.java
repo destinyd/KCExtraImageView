@@ -591,10 +591,82 @@ public class KCExtraImageViewTopShower extends ImageView {
     }
 
     public void setBackgroundAlpha(int alpha) {
-        int backgroundColor = alpha * 0x1000000;
-        mParent.setBackgroundColor(backgroundColor);
-        this.alpha = alpha;
+        setBackgroundAlpha(alpha, Color.BLACK, false);
     }
+
+    public void setBackgroundAlpha(int alpha, boolean anime) {
+        setBackgroundAlpha(alpha, Color.BLACK, anime);
+    }
+
+    AnimatedBackgroundAlphaRunnable mAnimatedBackgroundAlphaRunnable = null;
+
+    public void setBackgroundAlpha(int toAlpha, int pcolor, boolean anime) {
+        int color = pcolor & 0x00FFFFFF;
+        int pAlpha;
+        if (toAlpha > 255) {
+            pAlpha = 255;
+        } else if (toAlpha < 0) {
+            pAlpha = 0;
+        } else {
+            pAlpha = toAlpha;
+        }
+        if (anime) {
+            if (mAnimatedBackgroundAlphaRunnable != null)
+                mAnimatedBackgroundAlphaRunnable.stop();
+
+            mAnimatedBackgroundAlphaRunnable = new AnimatedBackgroundAlphaRunnable(alpha, pAlpha, color);
+            post(mAnimatedBackgroundAlphaRunnable);
+        } else {
+            int backgroundColor = pAlpha * 0x1000000 + color;
+            mParent.setBackgroundColor(backgroundColor);
+            this.alpha = pAlpha;
+        }
+    }
+
+    public class AnimatedBackgroundAlphaRunnable implements Runnable {
+        private final long mStartTime;
+        boolean running = true;
+        float lastT = 0;
+        final int fromAlpha;
+        final int toAlpha;
+        final int disAlpha;
+        final int color;
+
+        public AnimatedBackgroundAlphaRunnable(final int fromAlpha, final int toAlpha, final int color) {
+            mStartTime = System.currentTimeMillis();
+            this.fromAlpha = fromAlpha;
+            this.toAlpha = toAlpha;
+            this.disAlpha = toAlpha - fromAlpha;
+            this.color = color;
+
+        }
+
+        public void stop() {
+            running = false;
+        }
+
+        @Override
+        public void run() {
+            if (running) {
+                float t = interpolate();
+                int toAlpha = fromAlpha + (int) (t * disAlpha);
+                int backgroundColor = toAlpha * 0x1000000;
+                mParent.setBackgroundColor(backgroundColor);
+                alpha = toAlpha;
+                if (t < 1f) {
+                    Compat.postOnAnimation(KCExtraImageViewTopShower.this, this);
+                }
+            }
+        }
+
+        private float interpolate() {
+            float t = 1f * (System.currentTimeMillis() - mStartTime) / DURATION;
+            t = Math.min(1f, t);
+            t = sInterpolator.getInterpolation(t);
+            return t;
+        }
+    }
+
 
     public class AnimatedTranslateRunnable implements Runnable {
 
@@ -709,6 +781,7 @@ public class KCExtraImageViewTopShower extends ImageView {
 
         setScale(fitScale, true);
         rotationToOrigin(true);
+        setBackgroundAlpha(255, true);
         setTranslate(left - x, top - y, true);
     }
 
