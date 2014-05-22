@@ -259,20 +259,19 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                         move(event);
                     } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
                         if (event.getPointerCount() >= 2) {
-                            Log.e(TAG, "ACTION_MOVE ACTION_MODE_ZOOM");
                             float endDis = distance(event);// 结束距离
                             currentFingerAngle = angle(event);
                             int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
 //                            if (endDis > 10f) {
-                                float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
-                                //放大
-                                imageViewTop.setScale(scale, false);
+                            float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
+                            //放大
+                            imageViewTop.setScale(scale, false);
 //                                if (Math.abs(turnAngle) > 5) {
 
 //                                    if (currentFingerAngle != lastFingerAngle) {
 //                                    }
-                                    lastFingerAngle = currentFingerAngle;
-                                    imageViewTop.setRotation(turnAngle, false);
+                            lastFingerAngle = currentFingerAngle;
+                            imageViewTop.setRotation(turnAngle, false);
 //                                }
 
 //                            }
@@ -294,11 +293,10 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
             case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
                 costTime = System.currentTimeMillis() - mStartOpen;
                 if (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM) && imageViewTop != null) {
-                    if(imageViewTop.getScale() <= imageViewTop.getBaseScale()) {
+                    if (imageViewTop.getScale() <= imageViewTop.getBaseScale()) {
                         Log.e(TAG, "ACTION_POINTER_UP fall");
                         fall();
-                    }
-                    else{
+                    } else {
                         Log.e(TAG, "ACTION_POINTER_UP open");
                         open();
                     }
@@ -371,28 +369,29 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         });
         mStartOpen = System.currentTimeMillis();
 
-        Log.e(TAG, "imageViewTop.getScaleFull():"  +  imageViewTop.getScaleFull());
-        Log.e(TAG, "imageViewTop.getBaseScale():"  +  imageViewTop.getBaseScale());
-        Log.e(TAG, "imageViewTop.getScale():"  +  imageViewTop.getScale());
         float fitScale = imageViewTop.getScaleFull() * imageViewTop.getBaseScale();// / imageViewTop.getScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
 
-        RectF rect = imageViewTop.getDisplayRect();
-        int left = 0, top = 0;
-        if (rect.width() / frameLayoutTop.getWidth() > rect.height() / frameLayoutTop.getHeight()) {
-            top = (int) (
+        Drawable d = imageViewTop.getDrawable();
+        if (d == null)
+            return;
+        int imageWidth = d.getIntrinsicWidth();
+        int imageHeight = d.getIntrinsicHeight();
+        int left = 0;
+        int top = 0;
+        if (imageWidth * frameLayoutTop.getHeight() > imageHeight * frameLayoutTop.getWidth()) {
+            top += (int) (
                     frameLayoutTop.getHeight() -
-                            (frameLayoutTop.getWidth() * rect.height() / rect.width()) // 得到实际图片height
+                            (imageHeight * imageViewTop.getScaleFull() * imageViewTop.getBaseScale()) // 得到实际图片height
             ) / 2;
-        } else if (rect.width() / frameLayoutTop.getWidth() < rect.height() / frameLayoutTop.getHeight()) {
-            left = (int) (
+        } else if (imageWidth * frameLayoutTop.getHeight() < imageHeight * frameLayoutTop.getWidth()) {
+            left += (int) (
                     frameLayoutTop.getWidth() -
-                            (frameLayoutTop.getHeight() * rect.width() / rect.height()) // 得到实际图片width
+                            (imageWidth * imageViewTop.getScaleFull() * imageViewTop.getBaseScale()) // 得到实际图片width
             ) / 2;
         }
-        Log.e(TAG, "fitScale:" + fitScale);
 
         imageViewTop.setScale(fitScale, true);
-        imageViewTop.setRotation(imageViewTop.getBackAngle(), true);
+        imageViewTop.rotationToOrigin(true);
         imageViewTop.setTranslate(left - imageViewTop.x, top - imageViewTop.y, true);
     }
 
