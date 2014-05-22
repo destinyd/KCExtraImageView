@@ -685,6 +685,172 @@ public class KCExtraImageViewTopShower extends ImageView {
         }
     }
 
+    public void to_fullscreen() {
+        float fitScale = getScaleFull() * getBaseScale();// / imageViewTop.getScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
+
+        Drawable d = getDrawable();
+        if (d == null)
+            return;
+        int imageWidth = d.getIntrinsicWidth();
+        int imageHeight = d.getIntrinsicHeight();
+        int left = 0;
+        int top = 0;
+        if (imageWidth * getHeight() > imageHeight * getWidth()) {
+            top += (int) (
+                    getHeight() -
+                            (imageHeight * getScaleFull() * getBaseScale()) // 得到实际图片height
+            ) / 2;
+        } else if (imageWidth * getHeight() < imageHeight * getWidth()) {
+            left += (int) (
+                    getWidth() -
+                            (imageWidth * getScaleFull() * getBaseScale()) // 得到实际图片width
+            ) / 2;
+        }
+
+        setScale(fitScale, true);
+        rotationToOrigin(true);
+        setTranslate(left - x, top - y, true);
+    }
+
+
+    protected PointF startPoint = new PointF();
+    protected PointF currentPoint = new PointF();
+    private int mActionMode = 0;
+    private static final int ACTION_MODE_NONE = 0;
+    private static final int ACTION_MODE_DRAG = 1;
+    private static final int ACTION_MODE_ZOOM = 2;
+    private float startDis;// 开始距离
+    private PointF midPoint;// 中间点
+    private double lastFingerAngle;// 开始角度
+    private double currentFingerAngle;// 开始角度
+    private long FLOAT_TIME = 100; // 0.1s 释放时间低于这个视为点击操作
+    float currentScale;
+
+    StateRunnable mStateRunnable = null;
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (fromImageView.getState() == KCExtraImageView.STATE_FULLSCREEN) {
+            switch (event.getAction() & MotionEvent.ACTION_MASK) {
+                case MotionEvent.ACTION_DOWN:// 手指压下屏幕
+                    Log.e(TAG, "ACTION_DOWN");
+                    currentPoint.set(event.getX(), event.getY());
+                    if (mStateRunnable != null)
+                        mStateRunnable.stop();
+                    mStateRunnable = new StateRunnable(FLOAT_TIME);
+                    mStateRunnable.run();
+                    mActionMode = ACTION_MODE_DRAG;
+                    break;
+
+                case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
+                    if (mStateRunnable != null && !mStateRunnable.isRunning())
+                        if (mActionMode == ACTION_MODE_DRAG) {
+                            move(event);
+                        } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
+                            if (event.getPointerCount() >= 2) {
+                                float endDis = distance(event);// 结束距离
+                                currentFingerAngle = angle(event);
+                                int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
+                                if (endDis > 10f) {
+                                    float scale = currentScale * endDis / startDis;// 得到缩放倍数
+                                    //放大
+                                    setScale(scale, false);
+                                    if (Math.abs(turnAngle) > 5) {
+                                        lastFingerAngle = currentFingerAngle;
+                                        setRotation(turnAngle, false);
+                                    }
+                                }
+                            }
+                        }
+                    break;
+
+                case MotionEvent.ACTION_CANCEL:
+                    mStateRunnable.stop();
+                    break;
+                case MotionEvent.ACTION_UP:// 手指离开屏
+                    if (mActionMode != ACTION_MODE_NONE) {
+                        Log.e(TAG, "ACTION_UP !mStateRunnable.isDone():" + !mStateRunnable.isDone());
+                        mActionMode = ACTION_MODE_NONE;
+                        if (mStateRunnable.isRunning() && !mStateRunnable.isDone()) {
+                            fromImageView.fall();
+                        }
+                    }
+                    mStateRunnable.stop();
+                    break;
+                case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
+                    if (mActionMode == ACTION_MODE_ZOOM) {
+                        mActionMode = ACTION_MODE_NONE;
+                    }
+                    mStateRunnable.stop();
+                    break;
+
+                case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
+                    if (mActionMode == ACTION_MODE_NONE
+                            || (mActionMode == ACTION_MODE_DRAG && mStateRunnable.isRunning())) {
+                        mActionMode = ACTION_MODE_ZOOM;
+                        startDis = distance(event);
+                        currentScale = getScale();
+                        lastFingerAngle = angle(event);
+                        currentFingerAngle = lastFingerAngle;
+                        if (startDis > 10f) {
+                            midPoint = mid(event);
+                        }
+                    }
+                    mStateRunnable.stop();
+                    break;
+            }
+            return true;
+        }
+        return super.onTouchEvent(event);
+    }
+
+    private void move(MotionEvent event) {
+        PointF newPoint = new PointF(event.getX(), event.getY());
+        float distanceX = newPoint.x - currentPoint.x;
+        float distanceY = newPoint.y - currentPoint.y;
+        setTranslate(distanceX, distanceY);
+        currentPoint = newPoint;
+    }
+
+    public class StateRunnable implements Runnable {
+
+        private boolean running = true;
+        private final long mStartTime;
+        private final long mDuration;
+        boolean done = false;
+
+        public void stop() {
+            this.running = false;
+        }
+
+        public StateRunnable(final long millisecond) {
+            mStartTime = System.currentTimeMillis();
+            mDuration = millisecond;
+        }
+
+        public boolean isDone() {
+            return done;
+        }
+
+        public boolean isRunning() {
+            return running;
+        }
+
+        @Override
+        public void run() {
+            if (running) {
+                long t = System.currentTimeMillis() - mStartTime;
+                // We haven't hit our target scale yet, so post ourselves again
+                if (t < mDuration) {
+                    post(this);
+                } else {
+                    stop();
+                    done = true;
+                }
+            }
+        }
+    }
+
     public static float distance(PointF fromP, PointF toP) {
         float dx = toP.x - fromP.x;
         float dy = toP.y - fromP.y;

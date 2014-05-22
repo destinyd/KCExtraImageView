@@ -262,19 +262,16 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                             float endDis = distance(event);// 结束距离
                             currentFingerAngle = angle(event);
                             int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
-//                            if (endDis > 10f) {
-                            float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
-                            //放大
-                            imageViewTop.setScale(scale, false);
-//                                if (Math.abs(turnAngle) > 5) {
+                            if (endDis > 10f) {
+                                float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
+                                //放大
+                                imageViewTop.setScale(scale, false);
+                                if (Math.abs(turnAngle) > 5) {
+                                    lastFingerAngle = currentFingerAngle;
+                                    imageViewTop.setRotation(turnAngle, false);
+                                }
 
-//                                    if (currentFingerAngle != lastFingerAngle) {
-//                                    }
-                            lastFingerAngle = currentFingerAngle;
-                            imageViewTop.setRotation(turnAngle, false);
-//                                }
-
-//                            }
+                            }
                         }
                     }
                 }
@@ -362,39 +359,19 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         imageViewTop.setAnimatedTranslateListener(new OnAnimatedListener() {
             @Override
             public void onAnimated() {
-                open_full_screen();
+//                open_full_screen();
                 imageViewTop.setAnimatedTranslateListener(KCExtraImageView.this);
                 mState = STATE_FULLSCREEN;
             }
         });
         mStartOpen = System.currentTimeMillis();
 
-        float fitScale = imageViewTop.getScaleFull() * imageViewTop.getBaseScale();// / imageViewTop.getScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
-
-        Drawable d = imageViewTop.getDrawable();
-        if (d == null)
-            return;
-        int imageWidth = d.getIntrinsicWidth();
-        int imageHeight = d.getIntrinsicHeight();
-        int left = 0;
-        int top = 0;
-        if (imageWidth * frameLayoutTop.getHeight() > imageHeight * frameLayoutTop.getWidth()) {
-            top += (int) (
-                    frameLayoutTop.getHeight() -
-                            (imageHeight * imageViewTop.getScaleFull() * imageViewTop.getBaseScale()) // 得到实际图片height
-            ) / 2;
-        } else if (imageWidth * frameLayoutTop.getHeight() < imageHeight * frameLayoutTop.getWidth()) {
-            left += (int) (
-                    frameLayoutTop.getWidth() -
-                            (imageWidth * imageViewTop.getScaleFull() * imageViewTop.getBaseScale()) // 得到实际图片width
-            ) / 2;
-        }
-
-        imageViewTop.setScale(fitScale, true);
-        imageViewTop.rotationToOrigin(true);
-        imageViewTop.setTranslate(left - imageViewTop.x, top - imageViewTop.y, true);
+        imageViewTop.to_fullscreen();
     }
 
+    public int getState() {
+        return mState;
+    }
 
     private void open_full_screen() {
 //        hide_all_view();
@@ -426,7 +403,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
 //
 //        wmParams.gravity = Gravity.CENTER;
 //        wm.addView(mOpenView, wmParams);
-        imageViewTop.setVisibility(GONE);
+//        imageViewTop.setVisibility(GONE);
         if (frameLayoutTop != null)
             frameLayoutTop.addView(mOpenView);
     }
@@ -438,7 +415,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
 //        mState = STATE_NORMAL;
     }
 
-    private void close_open_image_view() {
+    public void close_open_image_view() {
         if (mOpenView != null && frameLayoutTop != null) {
             frameLayoutTop.removeView(mOpenView);
             mOpenView = null;
@@ -449,14 +426,14 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         fall();
     }
 
-    private void fall() {
+    public void fall() {
         if (mState == STATE_FULLSCREEN || mState == STATE_SUSPENDED) {
             if (mState == STATE_SUSPENDED) {
                 if (mActionMode == ACTION_MODE_ZOOM || mActionMode == ACTION_MODE_DRAG) {
                     anime_to_original();
                 }
             } else {
-                fullscreen_to_original();
+                anime_to_original();
             }
 
         }
@@ -467,11 +444,6 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         imageViewTop.setScale(scaleBase, true);
         imageViewTop.moveToOrigin();
     }
-//
-//    private void move_to_original() {
-//        mState = STATE_BACKING;
-//        imageViewTop.moveToOrigin();
-//    }
 
     private void anime_to_original() {
         mState = STATE_BACKING;
@@ -507,8 +479,12 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams(widthTopLayer, heightTopLayer);
         wmParams.format = PixelFormat.RGBA_8888; // 设置图片格式，效果为背景透明
         // 设置Window flag
-        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        wmParams.flags = //WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+//                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+        ;
 
 
         wmParams.gravity = Gravity.TOP | Gravity.LEFT;
@@ -759,6 +735,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                 } else {
                     mActionMode = ACTION_MODE_DRAG;
                     suspended();
+                    stop();
                     done = true;
                 }
             }
