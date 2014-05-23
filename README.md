@@ -30,3 +30,9 @@ public void set_drawable(Drawable drawable);
 public void setImageDrawable(Drawable drawable);
 ```
 即可
+
+###其他
+```
+public void setDuration(int Duration){}
+```
+用于设置动画时间，单位毫秒
