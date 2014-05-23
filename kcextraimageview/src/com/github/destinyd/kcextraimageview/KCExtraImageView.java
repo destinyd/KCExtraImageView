@@ -435,7 +435,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
             } else {
                 anime_to_original();
             }
-
+            setControled(false);
         }
     }
 
@@ -733,10 +733,13 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                 if (t < mDuration) {
                     post(this);
                 } else {
-                    mActionMode = ACTION_MODE_DRAG;
-                    suspended();
-                    stop();
-                    done = true;
+                    if(!controled) {
+                        mActionMode = ACTION_MODE_DRAG;
+                        setControled(true);
+                        suspended();
+                        stop();
+                        done = true;
+                    }
                 }
             }
         }
@@ -753,6 +756,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                 imageViewTop.setVisibility(status);
             if (mOpenView != null)
                 mOpenView.setVisibility(status);
+            setControled(false);
         }
     }
 
@@ -762,5 +766,11 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
 
     public void setDuration(int Duration) {
         imageViewTop.DURATION = Duration;
+    }
+
+    static private boolean controled =false;
+
+    public static void setControled(boolean controled) {
+        KCExtraImageView.controled = controled;
     }
 }
