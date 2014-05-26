@@ -230,7 +230,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     private PointF midPoint;// 中间点
     private double lastFingerAngle;// 开始角度
     private double currentFingerAngle;// 开始角度
-    private long FLOAT_TIME = 100; // 0.5s
+    private long FLOAT_TIME = 500; // 0.5s
 
     StateRunnable mStateRunnable = null;
 
@@ -281,24 +281,28 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                 mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_UP:// 手指离开屏
+                if (mStateRunnable.running && !mStateRunnable.isDone()) {
+                    to_open();
+                    break;
+                }
                 costTime = System.currentTimeMillis() - mStartOpen;
                 if (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM)) {
                     fall();
                 }
-                mStateRunnable.stop();
+//                mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
-                costTime = System.currentTimeMillis() - mStartOpen;
-                if (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM) && imageViewTop != null) {
-                    if (imageViewTop.getScale() <= imageViewTop.getBaseScale()) {
-                        Log.e(TAG, "ACTION_POINTER_UP fall");
-                        fall();
-                    } else {
-                        Log.e(TAG, "ACTION_POINTER_UP open");
-                        open();
-                    }
+//                costTime = System.currentTimeMillis() - mStartOpen;
+                if (mState == STATE_NORMAL) {
+//                        (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM) && imageViewTop != null) {
+//                    if (imageViewTop.getScale() <= imageViewTop.getBaseScale()) {
+//                        Log.e(TAG, "ACTION_POINTER_UP fall");
+//                        fall();
+//                    } else {
+//                        Log.e(TAG, "ACTION_POINTER_UP open");
+//                        open();
+//                    }
                 }
-                mStateRunnable.stop();
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
@@ -354,7 +358,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
 
     long mStartOpen = 0;
 
-    private void open() {
+    public void open() {
         mState = STATE_OPENING;
         imageViewTop.setAnimatedTranslateListener(new OnAnimatedListener() {
             @Override
@@ -453,22 +457,30 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     }
 
     private int mState = 0;
-    static final int STATE_NORMAL = 0;
-    static final int STATE_SUSPENDED = 1;
-    static final int STATE_FULLSCREEN = 2;
-    static final int STATE_OPENING = 3;
-    static final int STATE_BACKING = 4;
+    public static final int STATE_NORMAL = 0;
+    public static final int STATE_SUSPENDED = 1;
+    public static final int STATE_FULLSCREEN = 2;
+    public static final int STATE_OPENING = 3;
+    public static final int STATE_BACKING = 4;
 
     private void suspended() {
         mState = STATE_SUSPENDED;
-        create_top_shower();
+        create_top_shower(STATE_SUSPENDED);
         setVisibility(INVISIBLE);
+        setControled(true);
+    }
+
+    private void to_open() {
+        mState = STATE_SUSPENDED;
+        create_top_shower(STATE_FULLSCREEN);
+        setVisibility(INVISIBLE);
+        setControled(true);
     }
 
     FrameLayout frameLayoutTop = null;
     KCExtraImageViewTopShower imageViewTop;
 
-    private void create_top_shower() {
+    private void create_top_shower(int state) {
         initTopestShower();
 
         int actionBarHeight = get_actionbar_height();
@@ -504,6 +516,8 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         imageViewTop.setImageDrawable(getDrawable());
 
         initTopShowerLocationAndScale(leftImageView, topImageView);
+
+        imageViewTop.setPendingState(state);
 
         frameLayoutTop.addView(imageViewTop, layoutParamsImageViewInTopLayer);
 
@@ -733,15 +747,17 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                 if (t < mDuration) {
                     post(this);
                 } else {
-                    if(!controled) {
-                        mActionMode = ACTION_MODE_DRAG;
-                        setControled(true);
-                        suspended();
-                        stop();
-                        done = true;
-                    }
+                    done();
                 }
             }
+        }
+
+        private void done() {
+            done = true;
+        }
+
+        public boolean isDone() {
+            return done;
         }
     }
 
@@ -768,7 +784,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         imageViewTop.DURATION = Duration;
     }
 
-    static private boolean controled =false;
+    static private boolean controled = false;
 
     public static void setControled(boolean controled) {
         KCExtraImageView.controled = controled;

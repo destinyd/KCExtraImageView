@@ -27,6 +27,7 @@ public class KCExtraImageViewTopShower extends ImageView {
     private float mMidScale = DEFAULT_MID_SCALE;
     private float mMaxScale = DEFAULT_MAX_SCALE;
     private boolean isShadowable;
+    private int pendingState = KCExtraImageView.STATE_FULLSCREEN;
 
     public KCExtraImageViewTopShower(Context context) {
         this(context, null);
@@ -754,6 +755,9 @@ public class KCExtraImageViewTopShower extends ImageView {
         super.onLayout(changed, left, top, right, bottom);
         if (changed) {
             scaleFull = getFitViewScale();// * scaleBase;
+            if(pendingState == KCExtraImageView.STATE_FULLSCREEN) {
+                fromImageView.open();
+            }
         }
     }
 
@@ -806,7 +810,7 @@ public class KCExtraImageViewTopShower extends ImageView {
         if (fromImageView.getState() == KCExtraImageView.STATE_FULLSCREEN) {
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:// 手指压下屏幕
-                    Log.e(TAG, "ACTION_DOWN");
+//                    Log.e(TAG, "ACTION_DOWN");
                     currentPoint.set(event.getX(), event.getY());
                     if (mStateRunnable != null)
                         mStateRunnable.stop();
@@ -842,7 +846,7 @@ public class KCExtraImageViewTopShower extends ImageView {
                     break;
                 case MotionEvent.ACTION_UP:// 手指离开屏
                     if (mActionMode != ACTION_MODE_NONE) {
-                        Log.e(TAG, "ACTION_UP !mStateRunnable.isDone():" + !mStateRunnable.isDone());
+//                        Log.e(TAG, "ACTION_UP !mStateRunnable.isDone():" + !mStateRunnable.isDone());
                         mActionMode = ACTION_MODE_NONE;
                         if (mStateRunnable.isRunning() && !mStateRunnable.isDone()) {
                             fromImageView.fall();
@@ -922,6 +926,10 @@ public class KCExtraImageViewTopShower extends ImageView {
                 }
             }
         }
+    }
+
+    public void setPendingState(int pendingState) {
+        this.pendingState = pendingState;
     }
 
     public static float distance(PointF fromP, PointF toP) {
