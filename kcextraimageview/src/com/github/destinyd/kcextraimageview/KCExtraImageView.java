@@ -221,14 +221,12 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         super.setImageURI(uri);
     }
 
-    protected PointF startPoint = new PointF();
     protected PointF currentPoint = new PointF();
     private int mActionMode = 0;
     private static final int ACTION_MODE_NONE = 0;
     private static final int ACTION_MODE_DRAG = 1;
     private static final int ACTION_MODE_ZOOM = 2;
     private float startDis;// 开始距离
-    private PointF midPoint;// 中间点
     private double lastFingerAngle;// 开始角度
     private double currentFingerAngle;// 开始角度
     private long FLOAT_TIME = 500; // 0.5s
@@ -259,6 +257,10 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                             move(event);
                         } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
                             if (event.getPointerCount() >= 2) {
+                                PointF midPointNew = mid(event);
+                                PointF vector = new PointF(midPointNew.x - currentPoint.x,
+                                        midPointNew.y - currentPoint.y);
+                                move(vector);
                                 float endDis = distance(event);// 结束距离
                                 currentFingerAngle = angle(event);
                                 int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
@@ -266,21 +268,22 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                                     float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
                                     //放大
                                     imageViewTop.setScale(scale, false);
-                                    if (Math.abs(turnAngle) > 5) {
-                                        lastFingerAngle = currentFingerAngle;
-                                        imageViewTop.setRotation(turnAngle, false);
-                                    }
+//                                    if (Math.abs(turnAngle) > 5) {
+                                    lastFingerAngle = currentFingerAngle;
+                                    imageViewTop.setRotation(turnAngle, false);
+//                                    }
 
                                 }
+                                currentPoint = midPointNew;
                             }
                         }
                         break;
                     case STATE_NORMAL:
                         PointF newPoint = new PointF(event.getX(), event.getY());
-                        float distanceX = newPoint.x - startPoint.x;
-                        float distanceY = newPoint.y - startPoint.y;
+                        float distanceX = newPoint.x - currentPoint.x;
+                        float distanceY = newPoint.y - currentPoint.y;
                         if (Math.abs(distanceY) > Math.abs(distanceX) * 2
-                                && distance(newPoint, startPoint) > DISTANCE_DRAG) {
+                                && distance(newPoint, currentPoint) > DISTANCE_DRAG) {
                             mStateRunnable.stop();
                             suspend();
                             mActionMode = ACTION_MODE_DRAG;
@@ -340,11 +343,13 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
             case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
                 if (event.getPointerCount() == 2) {
                     if (mState == STATE_NORMAL) {
+                        Log.e(TAG, "ACTION_POINTER_DOWN STATE_NORMAL");
                         mStateRunnable.stop();
                         suspend();
                         initZoom(event);
                     }
                     if (mState == STATE_SUSPENDED) {
+                        Log.e(TAG, "ACTION_POINTER_DOWN STATE_SUSPENDED");
                         initZoom(event);
                     }
                 }
@@ -366,8 +371,8 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     }
 
     private void initDrag(MotionEvent event) {
-        startPoint.set(event.getX(), event.getY());
         currentPoint.set(event.getX(), event.getY());
+        Log.e(TAG, "initDrag currentPoint:x " + currentPoint.x + " y" + currentPoint.y);
     }
 
     private void initZoom(MotionEvent event) {
@@ -376,7 +381,8 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         lastFingerAngle = angle(event);
         currentFingerAngle = lastFingerAngle;
         if (startDis > 10f) {
-            midPoint = mid(this, event);
+            currentPoint = mid(event);
+            Log.e(TAG, "initZoom currentPoint:x " + currentPoint.x + " y" + currentPoint.y);
         }
     }
 
@@ -394,6 +400,27 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         return new PointF(midX, midY);
     }
 
+    public static PointF mid(PointF currentPoint, MotionEvent event) {
+        Log.e(TAG, "currentPoint.x:" + currentPoint.x);
+        Log.e(TAG, "currentPoint.y:" + currentPoint.y);
+        Log.e(TAG, "event.getX(0):" + event.getX(0));
+        Log.e(TAG, "event.getY(0):" + event.getY(0));
+        Log.e(TAG, "event.getX(1):" + event.getX(1));
+        Log.e(TAG, "event.getY(1):" + event.getY(1));
+        float x = (event.getX(1) + currentPoint.x) / 2;
+        float y = (event.getY(1) + currentPoint.y) / 2;
+        return new PointF(x, y);
+    }
+
+    public static PointF mid(MotionEvent event) {
+        Log.e(TAG, "event.getX(0):" + event.getX(0));
+        Log.e(TAG, "event.getY(0):" + event.getY(0));
+        Log.e(TAG, "event.getX(1):" + event.getX(1));
+        Log.e(TAG, "event.getY(1):" + event.getY(1));
+        float x = (event.getX(1) + event.getX(0)) / 2;
+        float y = (event.getY(1) + event.getY(0)) / 2;
+        return new PointF(x, y);
+    }
 
     private void move(MotionEvent event) {
         PointF newPoint = new PointF(event.getX(), event.getY());
@@ -401,7 +428,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         float distanceY = newPoint.y - currentPoint.y;
         imageViewTop.setTranslate(distanceX, distanceY);
         currentPoint = newPoint;
-        float dis = distance(startPoint, newPoint);
+//        float dis = distance(startPoint, newPoint);
 
 //        float percent = dis / DISTANCE_TO_FULLSCREEN;
 //        int alpha = (int) (percent * 255);
@@ -411,6 +438,10 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
 //        if (dis >= DISTANCE_TO_FULLSCREEN) {
 //            open();
 //        }
+    }
+
+    private void move(PointF vector) {
+        imageViewTop.setTranslate(vector.x, vector.y);
     }
 
     long mStartOpen = 0;
