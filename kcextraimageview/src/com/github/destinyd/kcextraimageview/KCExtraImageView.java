@@ -27,6 +27,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     private static final float DISTANCE_TO_FULLSCREEN = 200;
     private static final long OPEN_TIME = 1000; // 打开闲置时间1秒
     private static final float DISTANCE_DRAG = 10.0f;
+    private static final float CONST_TO_FULLSCREEN_SCALE_THRESHOLD = 1.0f;
     WindowManager windowManager;
 
     // These are set so we don't keep allocating them on the heap
@@ -305,7 +306,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                         }
                         break;
                     case STATE_SUSPENDED:
-                        if (imageViewTop.getScale() <= imageViewTop.getBaseScale()) {
+                        if (imageViewTop.getScale() <= imageViewTop.getBaseScale() * CONST_TO_FULLSCREEN_SCALE_THRESHOLD) {
                             Log.e(TAG, "ACTION_UP STATE_SUSPENDED fall");
                             fall();
                         } else {

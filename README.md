@@ -36,3 +36,10 @@ public void setImageDrawable(Drawable drawable);
 public void setDuration(int Duration){}
 ```
 用于设置动画时间，单位毫秒
+
+KCExtraImageView.java
+```
+private static final float CONST_TO_FULLSCREEN_SCALE = 1.0f;
+```
+用于设置缩放导致转到全屏显示的阙值
+
