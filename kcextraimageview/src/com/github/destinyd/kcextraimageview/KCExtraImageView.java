@@ -379,8 +379,17 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     }
 
     private void initDrag(MotionEvent event) {
-        currentPoint.set(event.getX(), event.getY());
-        Log.e(TAG, "initDrag currentPoint:x " + currentPoint.x + " y" + currentPoint.y);
+        if(is_first_pointer_up(event)){
+            currentPoint.set(event.getX(1), event.getY(1));
+        }
+        else
+        {
+            currentPoint.set(event.getX(), event.getY());
+        }
+    }
+
+    private boolean is_first_pointer_up(MotionEvent event) {
+        return ((event.getAction() >> (8 * 0)) & 0x0f) == 6 && ((event.getAction() >> (8 * 1)) & 0x0f) == 0;
     }
 
     private void initZoom(MotionEvent event) {
