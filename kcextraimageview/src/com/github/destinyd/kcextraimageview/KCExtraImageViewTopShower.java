@@ -167,10 +167,19 @@ public class KCExtraImageViewTopShower extends ImageView {
             post(mCurrentAnimatedZoomRunnable);
         } else {
             float toScale = scale / getScale();
-//            mSuppMatrix.postScale(toScale, toScale, focalX, focalY);
+            scaleToBackgroundAlpha(scale);
             mSuppMatrix.postScale(toScale, toScale, x, y);
             setImageViewMatrix(getDrawMatrix());
         }
+    }
+
+    private void scaleToBackgroundAlpha(float scale) {
+        float fitScale = getScaleFull() * getBaseScale();
+        Log.e(TAG, "fitScale:" + fitScale);
+        if(fitScale == 0)
+            return;
+        int alpha = (int)(255 * (scale - scaleBase) / (fitScale - scaleBase));
+        setBackgroundAlpha(alpha);
     }
 
     AnimatedZoomRunnable mCurrentAnimatedZoomRunnable = null;
@@ -217,6 +226,7 @@ public class KCExtraImageViewTopShower extends ImageView {
                 float midX = x;
                 float midY = y;
                 mSuppMatrix.postScale(deltaScale, deltaScale, midX, midY);
+                scaleToBackgroundAlpha(scale);
                 setImageViewMatrix(getDrawMatrix());
 
                 // We haven't hit our target scale yet, so post ourselves again
@@ -785,7 +795,7 @@ public class KCExtraImageViewTopShower extends ImageView {
 
         setScale(fitScale, true);
         rotationToOrigin(true);
-        setBackgroundAlpha(255, true);
+//        setBackgroundAlpha(255, true);
         setTranslate(left - x, top - y, true);
     }
 
@@ -810,7 +820,6 @@ public class KCExtraImageViewTopShower extends ImageView {
         if (fromImageView.getState() == KCExtraImageView.STATE_FULLSCREEN) {
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:// 手指压下屏幕
-//                    Log.e(TAG, "ACTION_DOWN");
                     currentPoint.set(event.getX(), event.getY());
                     if (mStateRunnable != null)
                         mStateRunnable.stop();
