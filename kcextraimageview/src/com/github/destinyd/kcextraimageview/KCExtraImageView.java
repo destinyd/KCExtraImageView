@@ -286,7 +286,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                             PointF newPoint = new PointF(event.getX(), event.getY());
                             float distanceX = newPoint.x - currentPoint.x;
                             float distanceY = newPoint.y - currentPoint.y;
-                            if (Math.abs(distanceY) > Math.abs(distanceX) * 2
+                            if (distanceY < 0 && Math.abs(distanceY) > Math.abs(distanceX) * 2
                                     && distance(newPoint, currentPoint) > DISTANCE_DRAG) {
                                 mStateRunnable.stop();
                                 suspend();
