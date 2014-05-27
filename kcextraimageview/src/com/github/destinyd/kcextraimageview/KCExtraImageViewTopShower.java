@@ -5,6 +5,7 @@ import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.FloatMath;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
@@ -19,13 +20,14 @@ import com.github.destinyd.kcextraimageview.photoview.log.LogManager;
 public class KCExtraImageViewTopShower extends ImageView {
 
     private static final String TAG = "KCExtraImageViewNewTopShower";
-    public static final float DEFAULT_MAX_SCALE = 4.0f;
+    public static final float DEFAULT_MAX_SCALE = 10.0f;
     public static final float DEFAULT_MID_SCALE = 1.0f;
-    public static final float DEFAULT_MIN_SCALE = 0.1f;
+    public static final float DEFAULT_MIN_SCALE = 0.0f;
     private float mMinScale = DEFAULT_MIN_SCALE;
     private float mMidScale = DEFAULT_MID_SCALE;
     private float mMaxScale = DEFAULT_MAX_SCALE;
     private boolean isShadowable;
+    private int pendingState = KCExtraImageView.STATE_FULLSCREEN;
 
     public KCExtraImageViewTopShower(Context context) {
         this(context, null);
@@ -111,7 +113,8 @@ public class KCExtraImageViewTopShower extends ImageView {
         return mMatrixValues[whichValue];
     }
 
-    private float scaleBase;
+    private float scaleBase;//常规图时大小
+    private float scaleFull;
 
     public float getBaseScale() {
         return scaleBase;
@@ -120,6 +123,10 @@ public class KCExtraImageViewTopShower extends ImageView {
     public void setScaleBase(float scale) {
         scaleBase = scale;
         setScale(scaleBase);
+    }
+
+    public float getScaleFull() {
+        return scaleFull;
     }
 
     int xBase, yBase;
@@ -160,9 +167,19 @@ public class KCExtraImageViewTopShower extends ImageView {
             post(mCurrentAnimatedZoomRunnable);
         } else {
             float toScale = scale / getScale();
-            mSuppMatrix.postScale(toScale, toScale, focalX, focalY);
+            scaleToBackgroundAlpha(scale);
+            mSuppMatrix.postScale(toScale, toScale, x, y);
             setImageViewMatrix(getDrawMatrix());
         }
+    }
+
+    private void scaleToBackgroundAlpha(float scale) {
+        float fitScale = getScaleFull() * getBaseScale();
+        Log.e(TAG, "fitScale:" + fitScale);
+        if(fitScale == 0)
+            return;
+        int alpha = (int)(255 * (scale - scaleBase) / (fitScale - scaleBase));
+        setBackgroundAlpha(alpha);
     }
 
     AnimatedZoomRunnable mCurrentAnimatedZoomRunnable = null;
@@ -209,6 +226,7 @@ public class KCExtraImageViewTopShower extends ImageView {
                 float midX = x;
                 float midY = y;
                 mSuppMatrix.postScale(deltaScale, deltaScale, midX, midY);
+                scaleToBackgroundAlpha(scale);
                 setImageViewMatrix(getDrawMatrix());
 
                 // We haven't hit our target scale yet, so post ourselves again
@@ -584,10 +602,82 @@ public class KCExtraImageViewTopShower extends ImageView {
     }
 
     public void setBackgroundAlpha(int alpha) {
-        int backgroundColor = alpha * 0x1000000;
-        mParent.setBackgroundColor(backgroundColor);
-        this.alpha = alpha;
+        setBackgroundAlpha(alpha, Color.BLACK, false);
     }
+
+    public void setBackgroundAlpha(int alpha, boolean anime) {
+        setBackgroundAlpha(alpha, Color.BLACK, anime);
+    }
+
+    AnimatedBackgroundAlphaRunnable mAnimatedBackgroundAlphaRunnable = null;
+
+    public void setBackgroundAlpha(int toAlpha, int pcolor, boolean anime) {
+        int color = pcolor & 0x00FFFFFF;
+        int pAlpha;
+        if (toAlpha > 255) {
+            pAlpha = 255;
+        } else if (toAlpha < 0) {
+            pAlpha = 0;
+        } else {
+            pAlpha = toAlpha;
+        }
+        if (anime) {
+            if (mAnimatedBackgroundAlphaRunnable != null)
+                mAnimatedBackgroundAlphaRunnable.stop();
+
+            mAnimatedBackgroundAlphaRunnable = new AnimatedBackgroundAlphaRunnable(alpha, pAlpha, color);
+            post(mAnimatedBackgroundAlphaRunnable);
+        } else {
+            int backgroundColor = pAlpha * 0x1000000 + color;
+            mParent.setBackgroundColor(backgroundColor);
+            this.alpha = pAlpha;
+        }
+    }
+
+    public class AnimatedBackgroundAlphaRunnable implements Runnable {
+        private final long mStartTime;
+        boolean running = true;
+        float lastT = 0;
+        final int fromAlpha;
+        final int toAlpha;
+        final int disAlpha;
+        final int color;
+
+        public AnimatedBackgroundAlphaRunnable(final int fromAlpha, final int toAlpha, final int color) {
+            mStartTime = System.currentTimeMillis();
+            this.fromAlpha = fromAlpha;
+            this.toAlpha = toAlpha;
+            this.disAlpha = toAlpha - fromAlpha;
+            this.color = color;
+
+        }
+
+        public void stop() {
+            running = false;
+        }
+
+        @Override
+        public void run() {
+            if (running) {
+                float t = interpolate();
+                int toAlpha = fromAlpha + (int) (t * disAlpha);
+                int backgroundColor = toAlpha * 0x1000000;
+                mParent.setBackgroundColor(backgroundColor);
+                alpha = toAlpha;
+                if (t < 1f) {
+                    Compat.postOnAnimation(KCExtraImageViewTopShower.this, this);
+                }
+            }
+        }
+
+        private float interpolate() {
+            float t = 1f * (System.currentTimeMillis() - mStartTime) / DURATION;
+            t = Math.min(1f, t);
+            t = sInterpolator.getInterpolation(t);
+            return t;
+        }
+    }
+
 
     public class AnimatedTranslateRunnable implements Runnable {
 
@@ -667,6 +757,188 @@ public class KCExtraImageViewTopShower extends ImageView {
 
     public OnAnimatedListener getAnimatedTranslateListener() {
         return mAnimatedTranslateListener;
+    }
+
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        if (changed) {
+            scaleFull = getFitViewScale();// * scaleBase;
+            if(pendingState == KCExtraImageView.STATE_FULLSCREEN) {
+                fromImageView.open();
+            }
+        }
+    }
+
+    public void to_fullscreen() {
+        float fitScale = getScaleFull() * getBaseScale();// / imageViewTop.getScale();// / (imageViewTop.getScale() / imageViewTop.getBaseScale());// / imageViewTop.getFitViewScale());
+
+        Drawable d = getDrawable();
+        if (d == null)
+            return;
+        int imageWidth = d.getIntrinsicWidth();
+        int imageHeight = d.getIntrinsicHeight();
+        int left = 0;
+        int top = 0;
+        if (imageWidth * getHeight() > imageHeight * getWidth()) {
+            top += (int) (
+                    getHeight() -
+                            (imageHeight * getScaleFull() * getBaseScale()) // 得到实际图片height
+            ) / 2;
+        } else if (imageWidth * getHeight() < imageHeight * getWidth()) {
+            left += (int) (
+                    getWidth() -
+                            (imageWidth * getScaleFull() * getBaseScale()) // 得到实际图片width
+            ) / 2;
+        }
+
+        setScale(fitScale, true);
+        rotationToOrigin(true);
+//        setBackgroundAlpha(255, true);
+        setTranslate(left - x, top - y, true);
+    }
+
+
+    protected PointF startPoint = new PointF();
+    protected PointF currentPoint = new PointF();
+    private int mActionMode = 0;
+    private static final int ACTION_MODE_NONE = 0;
+    private static final int ACTION_MODE_DRAG = 1;
+    private static final int ACTION_MODE_ZOOM = 2;
+    private float startDis;// 开始距离
+    private PointF midPoint;// 中间点
+    private double lastFingerAngle;// 开始角度
+    private double currentFingerAngle;// 开始角度
+    private long FLOAT_TIME = 100; // 0.1s 释放时间低于这个视为点击操作
+    float currentScale;
+
+    StateRunnable mStateRunnable = null;
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (fromImageView.getState() == KCExtraImageView.STATE_FULLSCREEN) {
+            switch (event.getAction() & MotionEvent.ACTION_MASK) {
+                case MotionEvent.ACTION_DOWN:// 手指压下屏幕
+                    currentPoint.set(event.getX(), event.getY());
+                    if (mStateRunnable != null)
+                        mStateRunnable.stop();
+                    mStateRunnable = new StateRunnable(FLOAT_TIME);
+                    mStateRunnable.run();
+                    mActionMode = ACTION_MODE_DRAG;
+                    break;
+
+                case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
+                    if (mStateRunnable != null && !mStateRunnable.isRunning())
+                        if (mActionMode == ACTION_MODE_DRAG) {
+                            move(event);
+                        } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
+                            if (event.getPointerCount() >= 2) {
+                                float endDis = distance(event);// 结束距离
+                                currentFingerAngle = angle(event);
+                                int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
+                                if (endDis > 10f) {
+                                    float scale = currentScale * endDis / startDis;// 得到缩放倍数
+                                    //放大
+                                    setScale(scale, false);
+                                    if (Math.abs(turnAngle) > 5) {
+                                        lastFingerAngle = currentFingerAngle;
+                                        setRotation(turnAngle, false);
+                                    }
+                                }
+                            }
+                        }
+                    break;
+
+                case MotionEvent.ACTION_CANCEL:
+                    mStateRunnable.stop();
+                    break;
+                case MotionEvent.ACTION_UP:// 手指离开屏
+                    if (mActionMode != ACTION_MODE_NONE) {
+//                        Log.e(TAG, "ACTION_UP !mStateRunnable.isDone():" + !mStateRunnable.isDone());
+                        mActionMode = ACTION_MODE_NONE;
+                        if (mStateRunnable.isRunning() && !mStateRunnable.isDone()) {
+                            fromImageView.fall();
+                        }
+                    }
+                    mStateRunnable.stop();
+                    break;
+                case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
+                    if (mActionMode == ACTION_MODE_ZOOM) {
+                        mActionMode = ACTION_MODE_NONE;
+                    }
+                    mStateRunnable.stop();
+                    break;
+
+                case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
+                    if (mActionMode == ACTION_MODE_NONE
+                            || (mActionMode == ACTION_MODE_DRAG && mStateRunnable.isRunning())) {
+                        mActionMode = ACTION_MODE_ZOOM;
+                        startDis = distance(event);
+                        currentScale = getScale();
+                        lastFingerAngle = angle(event);
+                        currentFingerAngle = lastFingerAngle;
+                        if (startDis > 10f) {
+                            midPoint = mid(event);
+                        }
+                    }
+                    mStateRunnable.stop();
+                    break;
+            }
+            return true;
+        }
+        return super.onTouchEvent(event);
+    }
+
+    private void move(MotionEvent event) {
+        PointF newPoint = new PointF(event.getX(), event.getY());
+        float distanceX = newPoint.x - currentPoint.x;
+        float distanceY = newPoint.y - currentPoint.y;
+        setTranslate(distanceX, distanceY);
+        currentPoint = newPoint;
+    }
+
+    public class StateRunnable implements Runnable {
+
+        private boolean running = true;
+        private final long mStartTime;
+        private final long mDuration;
+        boolean done = false;
+
+        public void stop() {
+            this.running = false;
+        }
+
+        public StateRunnable(final long millisecond) {
+            mStartTime = System.currentTimeMillis();
+            mDuration = millisecond;
+        }
+
+        public boolean isDone() {
+            return done;
+        }
+
+        public boolean isRunning() {
+            return running;
+        }
+
+        @Override
+        public void run() {
+            if (running) {
+                long t = System.currentTimeMillis() - mStartTime;
+                // We haven't hit our target scale yet, so post ourselves again
+                if (t < mDuration) {
+                    post(this);
+                } else {
+                    stop();
+                    done = true;
+                }
+            }
+        }
+    }
+
+    public void setPendingState(int pendingState) {
+        this.pendingState = pendingState;
     }
 
     public static float distance(PointF fromP, PointF toP) {
