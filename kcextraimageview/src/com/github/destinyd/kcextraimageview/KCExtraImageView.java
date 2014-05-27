@@ -254,49 +254,52 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
                 break;
 
             case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
-                switch (mState) {
-                    case STATE_SUSPENDED:
-                        if (mActionMode == ACTION_MODE_DRAG) {
-                            move(event);
-                        } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
-                            if (event.getPointerCount() >= 2) {
-                                PointF midPointNew = mid(event);
-                                PointF vector = new PointF(midPointNew.x - currentPoint.x,
-                                        midPointNew.y - currentPoint.y);
-                                move(vector);
-                                float endDis = distance(event);// 结束距离
-                                currentFingerAngle = angle(event);
-                                int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
-                                if (endDis > 10f) {
-                                    float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
-                                    //放大
-                                    imageViewTop.setScale(scale, false);
+                if (mStateRunnable != null) {
+                    switch (mState) {
+                        case STATE_SUSPENDED:
+                            if (mActionMode == ACTION_MODE_DRAG) {
+                                move(event);
+                            } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
+                                if (event.getPointerCount() >= 2) {
+                                    PointF midPointNew = mid(event);
+                                    PointF vector = new PointF(midPointNew.x - currentPoint.x,
+                                            midPointNew.y - currentPoint.y);
+                                    move(vector);
+                                    float endDis = distance(event);// 结束距离
+                                    currentFingerAngle = angle(event);
+                                    int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
+                                    if (endDis > 10f) {
+                                        float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
+                                        //放大
+                                        imageViewTop.setScale(scale, false);
 //                                    if (Math.abs(turnAngle) > 5) {
-                                    lastFingerAngle = currentFingerAngle;
-                                    imageViewTop.setRotation(turnAngle, false);
+                                        lastFingerAngle = currentFingerAngle;
+                                        imageViewTop.setRotation(turnAngle, false);
 //                                    }
 
+                                    }
+                                    currentPoint = midPointNew;
                                 }
-                                currentPoint = midPointNew;
                             }
-                        }
-                        break;
-                    case STATE_NORMAL:
-                        PointF newPoint = new PointF(event.getX(), event.getY());
-                        float distanceX = newPoint.x - currentPoint.x;
-                        float distanceY = newPoint.y - currentPoint.y;
-                        if (Math.abs(distanceY) > Math.abs(distanceX) * 2
-                                && distance(newPoint, currentPoint) > DISTANCE_DRAG) {
-                            mStateRunnable.stop();
-                            suspend();
-                            mActionMode = ACTION_MODE_DRAG;
-                        }
-                        break;
+                            break;
+                        case STATE_NORMAL:
+                            PointF newPoint = new PointF(event.getX(), event.getY());
+                            float distanceX = newPoint.x - currentPoint.x;
+                            float distanceY = newPoint.y - currentPoint.y;
+                            if (Math.abs(distanceY) > Math.abs(distanceX) * 2
+                                    && distance(newPoint, currentPoint) > DISTANCE_DRAG) {
+                                mStateRunnable.stop();
+                                suspend();
+                                mActionMode = ACTION_MODE_DRAG;
+                            }
+                            break;
+                    }
                 }
                 break;
 
             case MotionEvent.ACTION_CANCEL:
-                mStateRunnable.stop();
+                if (mStateRunnable != null)
+                    mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_UP:// 手指离开屏
                 switch (mState) {
@@ -324,12 +327,13 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
 //                mStateRunnable.stop();
                 break;
             case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
-                if (mState == STATE_SUSPENDED) {
-                    if (event.getPointerCount() == 2) {
-                        mActionMode = ACTION_MODE_DRAG;
-                        initDrag(event);
+                if (mStateRunnable != null) {
+                    if (mState == STATE_SUSPENDED) {
+                        if (event.getPointerCount() == 2) {
+                            mActionMode = ACTION_MODE_DRAG;
+                            initDrag(event);
+                        }
                     }
-                }
 //                costTime = System.currentTimeMillis() - mStartOpen;
 //                if (mState == STATE_NORMAL) {
 //                        (costTime > OPEN_TIME && mState != STATE_FULLSCREEN && (mActionMode == ACTION_MODE_DRAG || mActionMode == ACTION_MODE_ZOOM) && imageViewTop != null) {
@@ -341,6 +345,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
 //                        open();
 //                    }
 //                }
+                }
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
@@ -577,8 +582,8 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         wmParams.format = PixelFormat.RGBA_8888; // 设置图片格式，效果为背景透明
         // 设置Window flag
         wmParams.flags =
-        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 //                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
 //                        | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
 //                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
