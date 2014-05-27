@@ -80,18 +80,18 @@ public class KCTopestHookLayer extends FrameLayout {
     public boolean dispatchTouchEvent(MotionEvent event) {
         if (working) {
             if(hookView != null) {
+                Log.e(TAG, "hookView not null");
                 hookView.dispatchTouchEvent(event);
                 return true;
             }
             Iterator<View> iterator = views.iterator();
             while (iterator.hasNext()) {
                 View view = iterator.next();
-                Log.e(TAG, "ev.getX():" + event.getX());
-                Log.e(TAG, "ev.getY():" + event.getY());
                 if (inViewBounds(view, (int) event.getX(), (int) event.getY())) {
-                    hookView = (KCExtraImageView) view;
                     boolean result = view.dispatchTouchEvent(event);
                     if(result) {
+                        Log.e(TAG, "find a hookView");
+                        hookView = (KCExtraImageView) view;
                         return true;
                     }
                 }
@@ -106,10 +106,10 @@ public class KCTopestHookLayer extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        Log.e(TAG, "onTouchEvent");
         if (working)
         {
             if(hookView != null) {
-                Log.e(TAG, "onTouchEvent");
                 return hookView.onTouch(hookView, event);
             }
 //            return false;
@@ -128,6 +128,10 @@ public class KCTopestHookLayer extends FrameLayout {
         view.getLocationOnScreen(location);
         outRect.offset(location[0], location[1]);
         return outRect.contains(x, y);
+    }
+
+    public Activity getActivity() {
+        return activity;
     }
 
     static WindowManager _windowManager = null;
@@ -160,6 +164,17 @@ public class KCTopestHookLayer extends FrameLayout {
         return topestHookLayer;
     }
 
+    static public KCTopestHookLayer initOnce(Context context){
+        KCTopestHookLayer topestHookLayer = getFactory(context);
+        if(topestHookLayer.getActivity() == null) {
+            getWindowManager(context).addView(topestHookLayer, getHookParams(context));
+            topestHookLayer.work();
+        }
+        Activity activity = (Activity) context;
+        topestHookLayer.setActivity(activity);
+        return topestHookLayer;
+    }
+
     static public WindowManager getWindowManager(Context context) {
         if (_windowManager == null)
             _windowManager = (WindowManager) context.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
@@ -172,12 +187,17 @@ public class KCTopestHookLayer extends FrameLayout {
         // 设置Window flag
 
         wmParams.gravity = Gravity.TOP | Gravity.LEFT;
-        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-//                | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
-                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-//                | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
-//                | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
-        ; // 可以截获了
+        wmParams.flags =
+//                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+////                | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
+//                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+////                | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+////                | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
+//        ; // 可以截获了
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+        ;
 
         return wmParams;
     }

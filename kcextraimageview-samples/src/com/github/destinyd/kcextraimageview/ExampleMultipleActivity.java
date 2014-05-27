@@ -12,13 +12,6 @@ public class ExampleMultipleActivity extends Activity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        KCTopestHookLayer topestHookLayer = KCTopestHookLayer.init(this);
-        topestHookLayer.addHookView((KCExtraImageView) findViewById(R.id.iv_image));
-    }
-
-    @Override
     protected void onPause() {
         KCTopestHookLayer.clear(this);
         super.onPause();

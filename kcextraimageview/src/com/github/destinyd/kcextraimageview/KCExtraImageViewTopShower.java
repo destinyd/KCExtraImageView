@@ -175,7 +175,6 @@ public class KCExtraImageViewTopShower extends ImageView {
 
     private void scaleToBackgroundAlpha(float scale) {
         float fitScale = getScaleFull() * getBaseScale();
-        Log.e(TAG, "fitScale:" + fitScale);
         if(fitScale == 0)
             return;
         int alpha = (int)(255 * (scale - scaleBase) / (fitScale - scaleBase));

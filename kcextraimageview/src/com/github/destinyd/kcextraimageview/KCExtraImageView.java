@@ -23,7 +23,7 @@ import static com.github.destinyd.kcextraimageview.KCExtraImageViewTopShower.*;
  */
 public class KCExtraImageView extends ImageView implements View.OnTouchListener, OnAnimatedListener,
         ViewTreeObserver.OnGlobalLayoutListener {
-    private static final String TAG = "KCExtraImageViewNew";
+    private static final String TAG = "KCExtraImageView";
     private static final float DISTANCE_TO_FULLSCREEN = 200;
     private static final long OPEN_TIME = 1000; // 打开闲置时间1秒
     private static final float DISTANCE_DRAG = 10.0f;
@@ -49,6 +49,8 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         super(context, attrs, defStyle);
         init(context);
         initMatrix();
+        KCTopestHookLayer topestHookLayer = KCTopestHookLayer.initOnce(getContext());
+        topestHookLayer.addHookView(this);
     }
 
     ScaleType mPendingScaleType = null;
@@ -402,22 +404,22 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     }
 
     public static PointF mid(PointF currentPoint, MotionEvent event) {
-        Log.e(TAG, "currentPoint.x:" + currentPoint.x);
-        Log.e(TAG, "currentPoint.y:" + currentPoint.y);
-        Log.e(TAG, "event.getX(0):" + event.getX(0));
-        Log.e(TAG, "event.getY(0):" + event.getY(0));
-        Log.e(TAG, "event.getX(1):" + event.getX(1));
-        Log.e(TAG, "event.getY(1):" + event.getY(1));
+//        Log.e(TAG, "currentPoint.x:" + currentPoint.x);
+//        Log.e(TAG, "currentPoint.y:" + currentPoint.y);
+//        Log.e(TAG, "event.getX(0):" + event.getX(0));
+//        Log.e(TAG, "event.getY(0):" + event.getY(0));
+//        Log.e(TAG, "event.getX(1):" + event.getX(1));
+//        Log.e(TAG, "event.getY(1):" + event.getY(1));
         float x = (event.getX(1) + currentPoint.x) / 2;
         float y = (event.getY(1) + currentPoint.y) / 2;
         return new PointF(x, y);
     }
 
     public static PointF mid(MotionEvent event) {
-        Log.e(TAG, "event.getX(0):" + event.getX(0));
-        Log.e(TAG, "event.getY(0):" + event.getY(0));
-        Log.e(TAG, "event.getX(1):" + event.getX(1));
-        Log.e(TAG, "event.getY(1):" + event.getY(1));
+//        Log.e(TAG, "event.getX(0):" + event.getX(0));
+//        Log.e(TAG, "event.getY(0):" + event.getY(0));
+//        Log.e(TAG, "event.getX(1):" + event.getX(1));
+//        Log.e(TAG, "event.getY(1):" + event.getY(1));
         float x = (event.getX(1) + event.getX(0)) / 2;
         float y = (event.getY(1) + event.getY(0)) / 2;
         return new PointF(x, y);
@@ -522,6 +524,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
     public void fall() {
         anime_to_original();
         setControled(false);
+        KCTopestHookLayer.getFactory(getContext()).unhook();
     }
 
     private void fullscreen_to_original() {
@@ -556,6 +559,7 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         create_top_shower(STATE_FULLSCREEN);
         setVisibility(INVISIBLE);
         setControled(true);
+        KCTopestHookLayer.getFactory(getContext()).hook(this);
     }
 
     FrameLayout frameLayoutTop = null;
@@ -572,12 +576,13 @@ public class KCExtraImageView extends ImageView implements View.OnTouchListener,
         WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams(widthTopLayer, heightTopLayer);
         wmParams.format = PixelFormat.RGBA_8888; // 设置图片格式，效果为背景透明
         // 设置Window flag
-        wmParams.flags = //WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-//                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                        | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
-                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-        ;
+        wmParams.flags =
+        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+//                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+//                        | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
+//                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+//        ;
 
 
         wmParams.gravity = Gravity.TOP | Gravity.LEFT;
