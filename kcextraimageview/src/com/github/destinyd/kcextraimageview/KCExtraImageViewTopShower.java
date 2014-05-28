@@ -750,12 +750,19 @@ public class KCExtraImageViewTopShower extends ImageView {
     OnAnimatedListener mAnimatedTranslateListener = null;
 
     public float getFitViewScale() {
-        RectF rect = getDisplayRect();
-        if (rect.width() * getImageViewHeight() > rect.height() * getImageViewWidth()) {//过宽
-            return getImageViewWidth() / rect.width();
+        if (is_too_wide()) {//过宽
+            return getImageViewWidth() / getDisplayRect().width();
         } else {
-            return getImageViewHeight() / rect.height();
+            return getImageViewHeight() / getDisplayRect().height();
         }
+    }
+
+    private boolean is_too_wide() {
+        return getDisplayRect().width() * getImageViewHeight() > getDisplayRect().height() * getImageViewWidth();
+    }
+
+    private boolean is_too_tall() {
+        return getDisplayRect().width() * getImageViewHeight() < getDisplayRect().height() * getImageViewWidth();
     }
 
     public void setAnimatedTranslateListener(OnAnimatedListener mAnimatedTranslateListener) {
@@ -842,15 +849,9 @@ public class KCExtraImageViewTopShower extends ImageView {
                         } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
                             if (event.getPointerCount() >= 2) {
                                 float endDis = distance(event);// 结束距离
-                                currentFingerAngle = angle(event);
-                                int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
-                                if (endDis > 10f) {
-                                    float scale = currentScale * endDis / startDis;// 得到缩放倍数
-                                    //放大
-                                    setScale(scale, false);
-                                    lastFingerAngle = currentFingerAngle;
-                                    setRotation(turnAngle, false);
-                                }
+                                float scale = currentScale * endDis / startDis;// 得到缩放倍数
+                                //放大
+                                setScale(scale, false);
                             }
                         }
                     break;
@@ -899,8 +900,41 @@ public class KCExtraImageViewTopShower extends ImageView {
         PointF newPoint = new PointF(event.getX(), event.getY());
         float distanceX = newPoint.x - currentPoint.x;
         float distanceY = newPoint.y - currentPoint.y;
+
+        float minLeft = -Math.abs(getWidth() - image_width());
+        float minTop = -Math.abs(getHeight() - image_height());
+        float maxLeft = Math.abs(image_width() - getWidth());
+        float maxTop = Math.abs(image_height() - getHeight());
+        if (image_height() < getHeight())
+            minTop = 0.0f;
+        if (image_height() > getHeight())
+            maxTop = 0.0f;
+        if (image_width() < getWidth())
+            minLeft = 0.0f;
+        if (image_width() > getWidth())
+            maxLeft = 0.0f;
+        if (x + distanceX > maxLeft) {
+            distanceX = maxLeft - x;
+        } else if (x + distanceX < minLeft) {
+            distanceX = minLeft - x;
+        }
+
+        if (y + distanceY > maxTop) {
+            distanceY = maxTop - y;
+        } else if (y + distanceY < minTop) {
+            distanceY = minTop - y;
+        }
         setTranslate(distanceX, distanceY);
         currentPoint = newPoint;
+    }
+
+
+    private float image_width() {
+        return getDisplayRect().width();
+    }
+
+    private float image_height() {
+        return getDisplayRect().height();
     }
 
     public class StateRunnable implements Runnable {
