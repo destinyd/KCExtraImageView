@@ -22,6 +22,17 @@ public class ExampleSetDrawableActivity extends Activity {
         iv_image4.setImageDrawable(test1);
     }
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        KCTopestHookLayer topestHookLayer = KCTopestHookLayer.init(this);
+        topestHookLayer.addHookView(findViewById(R.id.iv_image1));
+        topestHookLayer.addHookView(findViewById(R.id.iv_image2));
+        topestHookLayer.addHookView(findViewById(R.id.iv_image3));
+        topestHookLayer.addHookView(findViewById(R.id.iv_image4));
+    }
+
     @Override
     protected void onPause() {
         KCTopestHookLayer.clear(this);

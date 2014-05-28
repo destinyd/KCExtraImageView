@@ -48,10 +48,10 @@ public class KCTopestHookLayer extends FrameLayout {
     }
 
     ArrayList<View> views = new ArrayList<View>();
-    KCExtraImageView hookView = null;
+    View hookView = null;
     Activity activity;
 
-    public void addHookView(KCExtraImageView view) {
+    public void addHookView(View view) {
         views.add(view);
     }
 

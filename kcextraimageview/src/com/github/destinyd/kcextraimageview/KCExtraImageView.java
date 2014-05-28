@@ -47,8 +47,6 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         super(context, attrs, defStyle);
         init(context);
         initMatrix();
-        KCTopestHookLayer topestHookLayer = KCTopestHookLayer.initOnce(getContext());
-        topestHookLayer.addHookView(this);
     }
 
     ScaleType mPendingScaleType = null;
@@ -443,12 +441,6 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         KCTopestHookLayer.getFactory(getContext()).unhook();
     }
 
-    private void fullscreen_to_original() {
-        mState = STATE_BACKING;
-        imageViewTop.setScale(scaleBase, true);
-        imageViewTop.moveToOrigin();
-    }
-
     private void anime_to_original() {
         mState = STATE_BACKING;
         imageViewTop.moveToOrigin();
@@ -766,10 +758,18 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
     public void onWindowFocusChanged(boolean hasWindowFocus) {
         super.onWindowFocusChanged(hasWindowFocus);
         int status = hasWindowFocus ? VISIBLE : GONE;
-        if (frameLayoutTop != null)
-            frameLayoutTop.setVisibility(status);
-        if (imageViewTop != null)
-            imageViewTop.setVisibility(status);
+//        if(hasWindowFocus)
+//            fall();
+        if(!hasWindowFocus){
+            if(frameLayoutTop != null){
+                windowManager.removeView(frameLayoutTop);
+                frameLayoutTop.destroyDrawingCache();
+                frameLayoutTop = null;
+                setVisibility(VISIBLE);
+                mState = STATE_NORMAL;
+                mActionMode = ACTION_MODE_NONE;
+            }
+        }
     }
 
     public int getDuration() {

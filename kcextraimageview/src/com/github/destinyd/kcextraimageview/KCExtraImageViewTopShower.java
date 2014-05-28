@@ -175,9 +175,9 @@ public class KCExtraImageViewTopShower extends ImageView {
 
     private void scaleToBackgroundAlpha(float scale) {
         float fitScale = getScaleFull() * getBaseScale();
-        if(fitScale == 0)
+        if (fitScale == 0)
             return;
-        int alpha = (int)(255 * (scale - scaleBase) / (fitScale - scaleBase));
+        int alpha = (int) (255 * (scale - scaleBase) / (fitScale - scaleBase));
         setBackgroundAlpha(alpha);
     }
 
@@ -543,10 +543,9 @@ public class KCExtraImageViewTopShower extends ImageView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if(isShadowable){
+        if (isShadowable) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec - SHADOW_SIZE / 2);
-        }
-        else
+        } else
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
@@ -773,7 +772,7 @@ public class KCExtraImageViewTopShower extends ImageView {
         super.onLayout(changed, left, top, right, bottom);
         if (changed) {
             scaleFull = getFitViewScale();// * scaleBase;
-            if(pendingState == KCExtraImageView.STATE_FULLSCREEN) {
+            if (pendingState == KCExtraImageView.STATE_FULLSCREEN) {
                 fromImageView.open();
             }
         }
@@ -849,10 +848,8 @@ public class KCExtraImageViewTopShower extends ImageView {
                                     float scale = currentScale * endDis / startDis;// 得到缩放倍数
                                     //放大
                                     setScale(scale, false);
-                                    if (Math.abs(turnAngle) > 5) {
-                                        lastFingerAngle = currentFingerAngle;
-                                        setRotation(turnAngle, false);
-                                    }
+                                    lastFingerAngle = currentFingerAngle;
+                                    setRotation(turnAngle, false);
                                 }
                             }
                         }
