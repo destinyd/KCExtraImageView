@@ -25,7 +25,7 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
     private static final float DISTANCE_TO_FULLSCREEN = 200;
     private static final long OPEN_TIME = 1000; // 打开闲置时间1秒
     private static final float DISTANCE_DRAG = 10.0f;
-    private static final float CONST_TO_FULLSCREEN_SCALE_THRESHOLD = 1.0f;
+    public static final float CONST_TO_FULLSCREEN_SCALE_THRESHOLD = 1.0f;
     WindowManager windowManager;
 
     // These are set so we don't keep allocating them on the heap
@@ -264,16 +264,12 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
                                     float endDis = distance(event);// 结束距离
                                     currentFingerAngle = angle(event);
                                     int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
-                                    if (endDis > 10f) {
-                                        float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
-                                        //放大
-                                        imageViewTop.setScale(scale, false);
-//                                    if (Math.abs(turnAngle) > 5) {
-                                        lastFingerAngle = currentFingerAngle;
-                                        imageViewTop.setRotation(turnAngle, false);
-//                                    }
+                                    float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
+                                    //放大
+                                    imageViewTop.setScale(scale, false);
+                                    lastFingerAngle = currentFingerAngle;
+                                    imageViewTop.setRotation(turnAngle, false);
 
-                                    }
                                     currentPoint = midPointNew;
                                     handled = true;
                                 }
@@ -757,11 +753,8 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
     @Override
     public void onWindowFocusChanged(boolean hasWindowFocus) {
         super.onWindowFocusChanged(hasWindowFocus);
-        int status = hasWindowFocus ? VISIBLE : GONE;
-//        if(hasWindowFocus)
-//            fall();
-        if(!hasWindowFocus){
-            if(frameLayoutTop != null){
+        if (!hasWindowFocus) {
+            if (frameLayoutTop != null) {
                 windowManager.removeView(frameLayoutTop);
                 frameLayoutTop.destroyDrawingCache();
                 frameLayoutTop = null;
