@@ -2,6 +2,7 @@ package com.github.destinyd.kcextraimageview;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.util.AttributeSet;
@@ -11,6 +12,9 @@ import android.widget.FrameLayout;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+
+import static com.github.destinyd.kcextraimageview.KCExtraImageView.get_actionbar_height;
+import static com.github.destinyd.kcextraimageview.KCExtraImageView.get_statusbar_height;
 
 /**
  * Created by dd on 14-5-20.
@@ -35,7 +39,7 @@ public class KCTopestHookLayer extends FrameLayout {
         working = true;
     }
 
-    public void hook(KCExtraImageView view){
+    public void hook(KCExtraImageView view) {
         hookView = view;
     }
 
@@ -56,48 +60,27 @@ public class KCTopestHookLayer extends FrameLayout {
     }
 
     @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        Log.e(TAG, "onInterceptTouchEvent");
-        if (working) {
-            Iterator<View> iterator = views.iterator();
-            while (iterator.hasNext()) {
-                View view = iterator.next();
-                if (inViewBounds(view, (int) ev.getX(), (int) ev.getY())) {
-                    hookView = (KCExtraImageView) view;
-                    Log.e(TAG, "onInterceptTouchEvent true");
-                    return true;
-                }
-            }
-            hookView = null;
-//            return false;
-        }
-
-        return super.onInterceptTouchEvent(ev);
-//        return true;
-    }
-
-    @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
+        event.offsetLocation(0.0f, get_statusbar_height(getContext()));
         if (working) {
-            if(hookView != null) {
-                Log.e(TAG, "hookView not null");
+            if (hookView != null) {
                 hookView.dispatchTouchEvent(event);
                 return true;
             }
             Iterator<View> iterator = views.iterator();
             while (iterator.hasNext()) {
                 View view = iterator.next();
-                if (inViewBounds(view, (int) event.getX(), (int) event.getY())) {
+                if (isViewContains(
+                        view,
+                        (int) event.getX(),
+                        (int) event.getY())) {
                     boolean result = view.dispatchTouchEvent(event);
-                    if(result) {
-                        Log.e(TAG, "find a hookView");
+                    if (result) {
                         hookView = (KCExtraImageView) view;
                         return true;
                     }
                 }
             }
-//            hookView = null;
-//            return false;
         }
 
         boolean b = activity.dispatchTouchEvent(event);
@@ -106,28 +89,38 @@ public class KCTopestHookLayer extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Log.e(TAG, "onTouchEvent");
-        if (working)
-        {
-            if(hookView != null) {
-                return hookView.onTouch(hookView, event);
+        if (working) {
+            if (hookView != null) {
+                return hookView.onTouchEvent(event);
             }
 //            return false;
         }
 
         boolean b = activity.onTouchEvent(event);
-        Log.e(TAG, "onTouchEvent:" + b);
+        Log.d(TAG, "onTouchEvent:" + b);
         return b;
     }
 
     Rect outRect = new Rect();
     int[] location = new int[2];
 
-    public boolean inViewBounds(View view, int x, int y) {
-        view.getDrawingRect(outRect);
-        view.getLocationOnScreen(location);
-        outRect.offset(location[0], location[1]);
-        return outRect.contains(x, y);
+    private boolean isViewContains(View view, int rx, int ry) {
+        int[] l = new int[2];
+        view.getLocationOnScreen(l);
+        int x = l[0];
+        int y = l[1];
+        int w = view.getWidth();
+        int h = view.getHeight();
+
+        if (rx < x || rx > x + w || ry < y || ry > y + h) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean testViewContains(View v, int rx, int ry) {
+        Rect rect = new Rect(v.getLeft(), v.getTop(), v.getRight(), v.getBottom());
+        return rect.contains(v.getLeft() + (int) rx, v.getTop() + (int) ry);
     }
 
     public Activity getActivity() {
@@ -144,17 +137,15 @@ public class KCTopestHookLayer extends FrameLayout {
     }
 
     static public void clear(Context context) {
-        if(_factory != null) {
+        try {
             getWindowManager(context).removeView(_factory);
+            _factory = null;
+        } catch (Exception ex) {
             _factory = null;
         }
     }
-//
-//    static public KCTopestHookLayer init(View view){
-//        return init(view.getContext());
-//    }
 
-    static public KCTopestHookLayer init(Context context){
+    static public KCTopestHookLayer init(Context context) {
         clear(context);
         KCTopestHookLayer topestHookLayer = getFactory(context);
         getWindowManager(context).addView(topestHookLayer, getHookParams(context));
@@ -164,9 +155,10 @@ public class KCTopestHookLayer extends FrameLayout {
         return topestHookLayer;
     }
 
-    static public KCTopestHookLayer initOnce(Context context){
+    static public KCTopestHookLayer initOnce(Context context) {
         KCTopestHookLayer topestHookLayer = getFactory(context);
-        if(topestHookLayer.getActivity() == null) {
+        if (topestHookLayer.getActivity() == null) {
+//            topestHookLayer.setBackgroundColor(Color.RED);
             getWindowManager(context).addView(topestHookLayer, getHookParams(context));
             topestHookLayer.work();
         }
@@ -187,6 +179,7 @@ public class KCTopestHookLayer extends FrameLayout {
         // 设置Window flag
 
         wmParams.gravity = Gravity.TOP | Gravity.LEFT;
+
         wmParams.flags =
 //                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
 ////                | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
@@ -194,36 +187,11 @@ public class KCTopestHookLayer extends FrameLayout {
 ////                | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
 ////                | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
 //        ; // 可以截获了
-                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
         ;
 
         return wmParams;
     }
-
-//    static public int get_statusbar_height(Context context) {
-//        Class c;
-//        try {
-//            c =
-//                    Class.forName("com.android.internal.R$dimen");
-//            Object obj = c.newInstance();
-//            Field field = c.getField("status_bar_height");
-//            int x = Integer.parseInt(field.get(obj).toString());
-//            int y = context.getResources().getDimensionPixelSize(x);
-//            return y;
-//        } catch (Exception e) {
-//        }
-//        return 0;
-//
-//    }
-//
-//    static public int get_actionbar_height(Context context) {
-//        TypedValue tv = new TypedValue();
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-//            if (context.getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true))
-//                return TypedValue.complexToDimensionPixelSize(tv.data, context.getResources().getDisplayMetrics());
-//        }
-//        return 0;
-//    }
 }

@@ -541,6 +541,15 @@ public class KCExtraImageViewTopShower extends ImageView {
         }
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if(isShadowable){
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec - SHADOW_SIZE / 2);
+        }
+        else
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
     public boolean isShadowable() {
         return isShadowable;
     }
@@ -854,7 +863,6 @@ public class KCExtraImageViewTopShower extends ImageView {
                     break;
                 case MotionEvent.ACTION_UP:// 手指离开屏
                     if (mActionMode != ACTION_MODE_NONE) {
-//                        Log.e(TAG, "ACTION_UP !mStateRunnable.isDone():" + !mStateRunnable.isDone());
                         mActionMode = ACTION_MODE_NONE;
                         if (mStateRunnable.isRunning() && !mStateRunnable.isDone()) {
                             fromImageView.fall();

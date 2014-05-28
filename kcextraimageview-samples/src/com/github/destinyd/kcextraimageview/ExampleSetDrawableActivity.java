@@ -21,5 +21,11 @@ public class ExampleSetDrawableActivity extends Activity {
         Drawable test1 = getResources().getDrawable( R.drawable.test );
         iv_image4.setImageDrawable(test1);
     }
+
+    @Override
+    protected void onPause() {
+        KCTopestHookLayer.clear(this);
+        super.onPause();
+    }
 }
 
