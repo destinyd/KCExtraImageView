@@ -228,6 +228,7 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
     private double lastFingerAngle;// 开始角度
     private double currentFingerAngle;// 开始角度
     private long FLOAT_TIME = 500; // 0.5s
+    float currentScale = 1.0f;
 
     StateRunnable mStateRunnable = null;
 
@@ -264,7 +265,7 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
                                     float endDis = distance(event);// 结束距离
                                     currentFingerAngle = angle(event);
                                     int turnAngle = (int) (currentFingerAngle - lastFingerAngle);// 变化的角度
-                                    float scale = imageViewTop.getBaseScale() * endDis / startDis;// 得到缩放倍数
+                                    float scale = currentScale * endDis / startDis;// 得到缩放倍数
                                     //放大
                                     imageViewTop.setScale(scale, false);
                                     lastFingerAngle = currentFingerAngle;
@@ -368,9 +369,8 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         startDis = distance(event);
         lastFingerAngle = angle(event);
         currentFingerAngle = lastFingerAngle;
-        if (startDis > 10f) {
-            currentPoint = mid(event);
-        }
+        currentPoint = mid(event);
+        currentScale = imageViewTop.getScale();
     }
 
     /**
