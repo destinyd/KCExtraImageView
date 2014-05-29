@@ -39,7 +39,9 @@ public void setDuration(int Duration){}
 
 KCExtraImageView.java
 ```
-private static final float CONST_TO_FULLSCREEN_SCALE = 1.0f;
+public void setScaleThresholdToFullscreen(float scaleThresholdToFullscreen);
 ```
 用于设置缩放导致转到全屏显示的阙值
 
+当悬浮模式缩放比例 大于 一般模式缩放比例 * 此阈值 时，动画转至全屏模式
+当全屏模式缩放比例 小于 全屏模式最适缩放比例 * 此阈值 时，动画转至一般模式

@@ -25,8 +25,17 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
     private static final float DISTANCE_TO_FULLSCREEN = 200;
     private static final long OPEN_TIME = 1000; // 打开闲置时间1秒
     private static final float DISTANCE_DRAG = 10.0f;
-    public static final float CONST_TO_FULLSCREEN_SCALE_THRESHOLD = 1.0f;
+    public static final float DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN = 1.0f;
+    float scaleThresholdToFullscreen = DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN;
     WindowManager windowManager;
+
+    public float getScaleThresholdToFullscreen() {
+        return scaleThresholdToFullscreen;
+    }
+
+    public void setScaleThresholdToFullscreen(float scaleThresholdToFullscreen) {
+        this.scaleThresholdToFullscreen = scaleThresholdToFullscreen;
+    }
 
     // These are set so we don't keep allocating them on the heap
     private final Matrix mBaseMatrix = new Matrix();
@@ -309,7 +318,7 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
                         }
                         break;
                     case STATE_SUSPENDED:
-                        if (imageViewTop.getScale() <= imageViewTop.getBaseScale() * CONST_TO_FULLSCREEN_SCALE_THRESHOLD) {
+                        if (imageViewTop.getScale() <= imageViewTop.getBaseScale() * getScaleThresholdToFullscreen()) {
                             Log.d(TAG, "ACTION_UP STATE_SUSPENDED fall");
                             fall();
                         } else {

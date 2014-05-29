@@ -867,7 +867,7 @@ public class KCExtraImageViewTopShower extends ImageView {
                         mActionMode = ACTION_MODE_NONE;
                         if (mStateRunnable.isRunning() && !mStateRunnable.isDone()) {
                             fromImageView.fall();
-                        } else if (getScale() < getScaleFull() * getBaseScale() * fromImageView.CONST_TO_FULLSCREEN_SCALE_THRESHOLD) {
+                        } else if (getScale() < getScaleFull() * getBaseScale() * fromImageView.getScaleThresholdToFullscreen()) {
                             fromImageView.fall();
                         }
                     }
