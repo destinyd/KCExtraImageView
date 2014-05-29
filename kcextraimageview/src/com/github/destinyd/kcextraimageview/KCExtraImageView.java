@@ -359,7 +359,7 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         }
     }
 
-    private boolean is_first_pointer_up(MotionEvent event) {
+    public static boolean is_first_pointer_up(MotionEvent event) {
         return ((event.getAction() >> (8 * 0)) & 0x0f) == 6 && ((event.getAction() >> (8 * 1)) & 0x0f) == 0;
     }
 

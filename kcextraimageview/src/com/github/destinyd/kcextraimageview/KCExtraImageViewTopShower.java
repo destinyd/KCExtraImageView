@@ -5,7 +5,6 @@ import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.FloatMath;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
@@ -13,6 +12,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import com.github.destinyd.kcextraimageview.photoview.Compat;
 import com.github.destinyd.kcextraimageview.photoview.log.LogManager;
+
+import static com.github.destinyd.kcextraimageview.KCExtraImageView.is_first_pointer_up;
 
 /**
  * Created by dd on 14-5-14.
@@ -845,14 +846,16 @@ public class KCExtraImageViewTopShower extends ImageView {
                 case MotionEvent.ACTION_MOVE:// 手指在屏幕移动，该 事件会不断地触发
                     if (mStateRunnable != null && !mStateRunnable.isRunning())
                         if (mActionMode == ACTION_MODE_DRAG) {
-                            move(event);
+                            move_in_drag(event);
                         } else if (mActionMode == ACTION_MODE_ZOOM) {// 缩放
-                            if (event.getPointerCount() >= 2) {
-                                float endDis = distance(event);// 结束距离
-                                float scale = currentScale * endDis / startDis;// 得到缩放倍数
-                                //放大
-                                setScale(scale, false);
-                            }
+                            PointF midPointNew = mid(event);
+                            PointF vector = new PointF(midPointNew.x - currentPoint.x,
+                                    midPointNew.y - currentPoint.y);
+                            move_in_zoom(event);
+                            float endDis = distance(event);// 结束距离
+                            float scale = currentScale * endDis / startDis;// 得到缩放倍数
+                            //放大
+                            setScale(scale, false);
                         }
                     break;
 
@@ -871,12 +874,19 @@ public class KCExtraImageViewTopShower extends ImageView {
                     mStateRunnable.stop();
                     break;
                 case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
-                    mStateRunnable.stop();
+                    if (mActionMode == ACTION_MODE_ZOOM && event.getPointerCount() == 2) {
+                        if (is_first_pointer_up(event)) {
+                            currentPoint.set(event.getX(1), event.getY(1));
+                        } else {
+                            currentPoint.set(event.getX(), event.getY());
+                        }
+                        mActionMode = ACTION_MODE_DRAG;
+                    }
                     break;
 
                 case MotionEvent.ACTION_POINTER_DOWN:// 当屏幕上还有触点（手指），再有一个手指压下屏幕
                     if (mActionMode == ACTION_MODE_NONE
-                            || (mActionMode == ACTION_MODE_DRAG && mStateRunnable.isRunning())) {
+                            || mActionMode == ACTION_MODE_DRAG) {
                         mActionMode = ACTION_MODE_ZOOM;
                         startDis = distance(event);
                         currentScale = getScale();
@@ -892,11 +902,26 @@ public class KCExtraImageViewTopShower extends ImageView {
         return super.onTouchEvent(event);
     }
 
-    private void move(MotionEvent event) {
+    private void move_in_drag(MotionEvent event) {
         PointF newPoint = new PointF(event.getX(), event.getY());
         float distanceX = newPoint.x - currentPoint.x;
         float distanceY = newPoint.y - currentPoint.y;
 
+        move_in_range(new PointF(distanceX, distanceY));
+        currentPoint = newPoint;
+    }
+
+    private void move_in_zoom(MotionEvent event) {
+        PointF midPointNew = mid(event);
+        PointF vector = new PointF(midPointNew.x - midPoint.x,
+                midPointNew.y - midPoint.y);
+        move_in_range(vector);
+        midPoint = midPointNew;
+    }
+
+    public void move_in_range(PointF vector) {
+        float distanceX = vector.x;
+        float distanceY = vector.y;
         float minLeft = -Math.abs(getWidth() - image_width());
         float minTop = -Math.abs(getHeight() - image_height());
         float maxLeft = Math.abs(image_width() - getWidth());
@@ -921,7 +946,6 @@ public class KCExtraImageViewTopShower extends ImageView {
             distanceY = minTop - y;
         }
         setTranslate(distanceX, distanceY);
-        currentPoint = newPoint;
     }
 
 
