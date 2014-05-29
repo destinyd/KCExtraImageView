@@ -1,12 +1,5 @@
 Android KCExtraImageView
 ============================
-###依赖项：
-无
-
-
-###需要权限：
-无
-
 ###如何引用此组件：
 已经独立成maven项目，mvn install之后可以在项目maven添加以下依赖引用：
 
@@ -19,8 +12,7 @@ Android KCExtraImageView
 </dependency>
 ```
 
-###注意事项
-需求中
+###需求所需要方法说明
 实例方法
 ```
 public void set_drawable(Drawable drawable);
@@ -29,9 +21,7 @@ public void set_drawable(Drawable drawable);
 ```
 public void setImageDrawable(Drawable drawable);
 ```
-即可
 
-###其他
 ```
 public void setDuration(int Duration){}
 ```
@@ -49,3 +39,31 @@ public void setScaleThresholdToFullscreen(float scaleThresholdToFullscreen);
 public void setDistanceToDrag(float distanceToDrag);
 ```
 用于设置上提进入悬浮模式的距离（distanceToDrag为像素）， 默认为10.0
+
+###注意事项
+由于Android视图有自己的触摸操作的分发模式，所以当在复合视图中，会存在需要全屏操作图片时，触发其他视图的触摸操作。
+
+因此我写了一个全屏拦截触摸事件的视图，以保证更好的体验效果。
+
+但是有点小麻烦就是必须重写Activity的一些事件（如果只是单视图可以不需要）
+```
+@Override
+protected void onResume() {
+  super.onResume();
+  KCTopestHookLayer topestHookLayer = KCTopestHookLayer.init(this);
+  topestHookLayer.addHookView(findViewById(R.id.iv_image));
+}
+
+@Override
+protected void onPause() {
+  KCTopestHookLayer.clear(this);
+  super.onPause();
+}
+```
+其中
+addHookView(View view);
+为添加拦截对象
+
+需要把所有KCExtraImageView对象都addHookView一遍
+
+具体可以参考ExampleImagesActivity
