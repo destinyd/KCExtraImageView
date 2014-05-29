@@ -22,8 +22,6 @@ import static com.github.destinyd.kcextraimageview.KCExtraImageViewTopShower.*;
 public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         ViewTreeObserver.OnGlobalLayoutListener {
     private static final String TAG = "KCExtraImageView";
-    private static final float DISTANCE_TO_FULLSCREEN = 200;
-    private static final long OPEN_TIME = 1000; // 打开闲置时间1秒
     private static final float DEFAULT_DISTANCE_TO_DRAG = 10.0f;
     public static final float DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN = 1.0f;
     float scaleThresholdToFullscreen = DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN;

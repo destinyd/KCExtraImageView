@@ -70,15 +70,6 @@ public class KCExtraImageViewTopShower extends ImageView {
     }
 
     /**
-     * Helper method that simply checks the Matrix, and then displays the result
-     */
-    public void checkAndDisplayMatrix() {
-        if (checkMatrixBounds()) {
-            setImageViewMatrix(getDrawMatrix());
-        }
-    }
-
-    /**
      * Helper method that maps the supplied Matrix to the current Drawable
      *
      * @param matrix - Matrix to map Drawable against
@@ -93,10 +84,6 @@ public class KCExtraImageViewTopShower extends ImageView {
             return mDisplayRect;
         }
         return null;
-    }
-
-    public Matrix getDisplayMatrix() {
-        return new Matrix(getDrawMatrix());
     }
 
     public Matrix getDrawMatrix() {
