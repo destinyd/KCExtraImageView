@@ -37,7 +37,6 @@ public void setDuration(int Duration){}
 ```
 用于设置动画时间，单位毫秒
 
-KCExtraImageView.java
 ```
 public void setScaleThresholdToFullscreen(float scaleThresholdToFullscreen);
 ```
@@ -45,3 +44,8 @@ public void setScaleThresholdToFullscreen(float scaleThresholdToFullscreen);
 
 当悬浮模式缩放比例 大于 一般模式缩放比例 * 此阈值 时，动画转至全屏模式
 当全屏模式缩放比例 小于 全屏模式最适缩放比例 * 此阈值 时，动画转至一般模式
+
+```
+public void setDistanceToDrag(float distanceToDrag);
+```
+用于设置上提进入悬浮模式的距离（distanceToDrag为像素）， 默认为10.0

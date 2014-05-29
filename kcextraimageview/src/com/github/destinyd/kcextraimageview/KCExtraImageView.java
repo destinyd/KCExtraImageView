@@ -24,9 +24,10 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
     private static final String TAG = "KCExtraImageView";
     private static final float DISTANCE_TO_FULLSCREEN = 200;
     private static final long OPEN_TIME = 1000; // 打开闲置时间1秒
-    private static final float DISTANCE_DRAG = 10.0f;
+    private static final float DEFAULT_DISTANCE_TO_DRAG = 10.0f;
     public static final float DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN = 1.0f;
     float scaleThresholdToFullscreen = DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN;
+    float distanceToDrag = DEFAULT_DISTANCE_TO_DRAG;
     WindowManager windowManager;
 
     public float getScaleThresholdToFullscreen() {
@@ -35,6 +36,14 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
 
     public void setScaleThresholdToFullscreen(float scaleThresholdToFullscreen) {
         this.scaleThresholdToFullscreen = scaleThresholdToFullscreen;
+    }
+
+    public float getDistanceToDrag() {
+        return distanceToDrag;
+    }
+
+    public void setDistanceToDrag(float distanceToDrag) {
+        this.distanceToDrag = distanceToDrag;
     }
 
     // These are set so we don't keep allocating them on the heap
@@ -290,7 +299,7 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
                             float distanceX = newPoint.x - currentPoint.x;
                             float distanceY = newPoint.y - currentPoint.y;
                             if (distanceY < 0 && Math.abs(distanceY) > Math.abs(distanceX) * 2
-                                    && distance(newPoint, currentPoint) > DISTANCE_DRAG) {
+                                    && distance(newPoint, currentPoint) > getDistanceToDrag()) {
                                 mStateRunnable.stop();
                                 suspend();
                                 mActionMode = ACTION_MODE_DRAG;
