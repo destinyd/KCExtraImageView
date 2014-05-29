@@ -864,17 +864,13 @@ public class KCExtraImageViewTopShower extends ImageView {
                         mActionMode = ACTION_MODE_NONE;
                         if (mStateRunnable.isRunning() && !mStateRunnable.isDone()) {
                             fromImageView.fall();
+                        } else if (getScale() < getScaleFull() * getBaseScale() * fromImageView.CONST_TO_FULLSCREEN_SCALE_THRESHOLD) {
+                            fromImageView.fall();
                         }
                     }
                     mStateRunnable.stop();
                     break;
                 case MotionEvent.ACTION_POINTER_UP:// 有手指离开屏幕,但屏幕还有触点（手指）
-                    if (mActionMode == ACTION_MODE_ZOOM) {
-                        if (getScale() < getBaseScale() * fromImageView.CONST_TO_FULLSCREEN_SCALE_THRESHOLD) {
-                            fromImageView.fall();
-                        }
-                        mActionMode = ACTION_MODE_NONE;
-                    }
                     mStateRunnable.stop();
                     break;
 
