@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package com.github.destinyd.kcextraimageview.photoview;
+package com.github.destinyd.kcextraimageview;
 
 import android.annotation.TargetApi;
 import android.os.Build.VERSION;

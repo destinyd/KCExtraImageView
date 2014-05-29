@@ -10,8 +10,6 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import com.github.destinyd.kcextraimageview.photoview.Compat;
-import com.github.destinyd.kcextraimageview.photoview.log.LogManager;
 
 import static com.github.destinyd.kcextraimageview.KCExtraImageView.is_first_pointer_up;
 
@@ -140,10 +138,6 @@ public class KCExtraImageViewTopShower extends ImageView {
                          boolean animate) {
         // Check to see if the scale is within bounds
         if (scale < mMinScale || scale > mMaxScale) {
-            LogManager
-                    .getLogger()
-                    .i(TAG,
-                            "Scale must be within the range of minScale and maxScale");
             return;
         }
 
