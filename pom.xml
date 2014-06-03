@@ -68,6 +68,7 @@
         <android.version>4.1.1.4</android.version>
         <android-support.version>r7</android-support.version>
         <photoview.version>1.2.3</photoview.version>
+        <android.plugin.version>3.8.2</android.plugin.version>
     </properties>
 
     <dependencies>
