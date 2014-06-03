@@ -7,7 +7,6 @@
         <artifactId>kcextraimageview-parent</artifactId>
         <groupId>com.github.destinyd.kcextraimageview</groupId>
         <version>0.1.0</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>kcextraimageview-samples</artifactId>
@@ -21,6 +20,25 @@
             <version>${android.version}</version>
 			<scope>provided</scope>
 		</dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>com.google.android</groupId>-->
+            <!--<artifactId>support-v4</artifactId>-->
+            <!--<version>${android-support.version}</version>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+            <!--<groupId>android</groupId>-->
+            <!--<artifactId>android</artifactId>-->
+            <!--<version>${src.android.version}</version>-->
+            <!--<scope>provided</scope>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+            <!--<groupId>android.support</groupId>-->
+            <!--<artifactId>compatibility-v4</artifactId>-->
+            <!--<version>${src.compatibility-v4.version}</version>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>com.github.destinyd.kcextraimageview</groupId>
@@ -38,7 +56,6 @@
             <plugin>
                 <groupId>com.jayway.maven.plugins.android.generation2</groupId>
                 <artifactId>android-maven-plugin</artifactId>
-                <extensions>true</extensions>
             </plugin>
 
             <plugin>
@@ -49,16 +66,5 @@
                 </configuration>
             </plugin>
         </plugins>
-
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>com.jayway.maven.plugins.android.generation2</groupId>
-                    <artifactId>android-maven-plugin</artifactId>
-                    <version>${android.plugin.version}</version>
-                    <extensions>true</extensions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
     </build>
 </project>
