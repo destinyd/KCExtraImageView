@@ -1,7 +1,10 @@
 package com.github.destinyd.kcextraimageview;
 
 import android.content.Context;
-import android.graphics.*;
+import android.graphics.Matrix;
+import android.graphics.PixelFormat;
+import android.graphics.PointF;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -21,12 +24,117 @@ import static com.github.destinyd.kcextraimageview.KCExtraImageViewTopShower.*;
  */
 public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         ViewTreeObserver.OnGlobalLayoutListener {
+    public static final float DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN = 1.0f;
+    private float scaleThresholdToFullscreen = DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN;
+    public static final int STATE_NORMAL = 0;
+    public static final int STATE_SUSPENDED = 1;
+    public static final int STATE_FULLSCREEN = 2;
+    public static final int STATE_OPENING = 3;
+    public static final int STATE_BACKING = 4;
+    protected static final int EDGE_NONE = -1;
+    protected static final int EDGE_LEFT = 0;
+    protected static final int EDGE_RIGHT = 1;
+    protected static final int EDGE_BOTH = 2;
+    protected int mScrollEdge = EDGE_BOTH;
     private static final String TAG = "KCExtraImageView";
     private static final float DEFAULT_DISTANCE_TO_DRAG = 10.0f;
-    public static final float DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN = 1.0f;
-    float scaleThresholdToFullscreen = DEFAULT_SCALE_THRESHOLD_TO_FULLSCREEN;
-    float distanceToDrag = DEFAULT_DISTANCE_TO_DRAG;
-    WindowManager windowManager;
+    private float distanceToDrag = DEFAULT_DISTANCE_TO_DRAG;
+    private static final int ACTION_MODE_NONE = 0;
+    private static final int ACTION_MODE_DRAG = 1;
+    private static final int ACTION_MODE_ZOOM = 2;
+    protected final Matrix mSuppMatrix = new Matrix();
+    // These are set so we don't keep allocating them on the heap
+    private final Matrix mBaseMatrix = new Matrix();
+    private final Matrix mDrawMatrix = new Matrix();
+    private final RectF mDisplayRect = new RectF();
+    private final float[] mMatrixValues = new float[9];
+    protected PointF currentPoint = new PointF();
+    private WindowManager windowManager;
+    private ScaleType mPendingScaleType = null;
+    private float scaleBase = 1;
+    private float currentScale = 1.0f;
+    private StateRunnable mStateRunnable = null;
+    private long mStartOpen = 0;
+    private FrameLayout frameLayoutTop = null;
+    private KCExtraImageViewTopShower imageViewTop;
+    private float mToperShowerScale;
+    private ScaleType mScaleType = ScaleType.FIT_CENTER;
+    private int mActionMode = 0;
+    private float startDis;// 开始距离
+    private double lastFingerAngle;// 开始角度
+    private double currentFingerAngle;// 开始角度
+    private long FLOAT_TIME = 500; // 0.5s
+    private int mState = 0;
+    private int mIvTop, mIvRight, mIvBottom, mIvLeft;
+
+    public KCExtraImageView(Context context) {
+        this(context, null);
+    }
+
+    public KCExtraImageView(Context context, AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+    public KCExtraImageView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        init(context);
+        initMatrix();
+    }
+
+    public static boolean is_first_pointer_up(MotionEvent event) {
+        return ((event.getAction() >> (8 * 0)) & 0x0f) == 6 && ((event.getAction() >> (8 * 1)) & 0x0f) == 0;
+    }
+
+    /**
+     * 计算两点之间的中间点
+     *
+     * @param event
+     * @return
+     */
+    public static PointF mid(View view, MotionEvent event) {
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        float midX = (event.getX(1) + event.getX(0)) / 2 + location[0];
+        float midY = (event.getY(1) + event.getY(0)) / 2 + location[1];
+        return new PointF(midX, midY);
+    }
+
+    public static PointF mid(PointF currentPoint, MotionEvent event) {
+        float x = (event.getX(1) + currentPoint.x) / 2;
+        float y = (event.getY(1) + currentPoint.y) / 2;
+        return new PointF(x, y);
+    }
+
+    public static PointF mid(MotionEvent event) {
+        float x = (event.getX(1) + event.getX(0)) / 2;
+        float y = (event.getY(1) + event.getY(0)) / 2;
+        return new PointF(x, y);
+    }
+
+    public static int get_statusbar_height(Context context) {
+        Class c;
+        try {
+            c =
+                    Class.forName("com.android.internal.R$dimen");
+            Object obj = c.newInstance();
+            Field field = c.getField("status_bar_height");
+            int x = Integer.parseInt(field.get(obj).toString());
+            int y = context.getResources().getDimensionPixelSize(x);
+            return y;
+        } catch (Exception e) {
+        }
+        return 0;
+    }
+
+    public static int get_actionbar_height(Context context) {
+        TypedValue tv = new TypedValue();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            if (context.getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true))
+                return TypedValue.complexToDimensionPixelSize(tv.data, context.getResources().getDisplayMetrics());
+//        } else if (imageView.getContext().getTheme().resolveAttribute(com.actionbarsherlock.R.attr.actionBarSize, tv, true)) {
+//            actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, imageView.getContext().getResources().getDisplayMetrics());
+        }
+        return 0;
+    }
 
     public float getScaleThresholdToFullscreen() {
         return scaleThresholdToFullscreen;
@@ -44,28 +152,52 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         this.distanceToDrag = distanceToDrag;
     }
 
-    // These are set so we don't keep allocating them on the heap
-    private final Matrix mBaseMatrix = new Matrix();
-    private final Matrix mDrawMatrix = new Matrix();
-    protected final Matrix mSuppMatrix = new Matrix();
-    private final RectF mDisplayRect = new RectF();
-    private final float[] mMatrixValues = new float[9];
-
-    public KCExtraImageView(Context context) {
-        this(context, null);
+    public RectF getDisplayRect() {
+        return getDisplayRect(getDrawMatrix());
     }
 
-    public KCExtraImageView(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+    public Matrix getDrawMatrix() {
+        mDrawMatrix.set(mBaseMatrix);
+        mDrawMatrix.postConcat(mSuppMatrix);
+        return mDrawMatrix;
     }
 
-    public KCExtraImageView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        init(context);
-        initMatrix();
+    public int getDuration() {
+        return imageViewTop.DURATION;
     }
 
-    ScaleType mPendingScaleType = null;
+    public void setDuration(int Duration) {
+        imageViewTop.DURATION = Duration;
+    }
+
+    public void open() {
+        mState = STATE_OPENING;
+        imageViewTop.setAnimatedTranslateListener(new OnAnimatedListener() {
+            @Override
+            public void onAnimated() {
+//                open_full_screen();
+                imageViewTop.setAnimatedTranslateListener(KCExtraImageView.this);
+                mState = STATE_FULLSCREEN;
+            }
+        });
+        mStartOpen = System.currentTimeMillis();
+
+        imageViewTop.to_fullscreen();
+    }
+
+    public int getState() {
+        return mState;
+    }
+
+    public void fall() {
+        anime_to_original();
+        KCTopestHookLayer.getFactory(getContext()).unhook();
+    }
+
+    // 需求
+    public void set_drawable(Drawable drawable){
+        setImageDrawable(drawable);
+    }
 
     @Override
     public void setScaleType(ScaleType scaleType) {
@@ -76,177 +208,10 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         }
     }
 
-    float scaleBase = 1;
-
-    private void init(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
-        windowManager = (WindowManager) context.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
-        ViewTreeObserver observer = getViewTreeObserver();
-        if (null != observer)
-            observer.addOnGlobalLayoutListener(this);
-        if (null != mPendingScaleType) {
-            setScaleType(mPendingScaleType);
-            mPendingScaleType = null;
-        }
-    }
-
-    private void initMatrix() {
-        resetMatrix();
-        setImageViewScaleTypeMatrix(this);
-    }
-
-    void initOnLayout() {
-        RectF rect = getDisplayRect();
-        if (rect == null)
-            return;
-        if (rect.width() * getImageViewHeight() > rect.height() * getImageViewWidth()) {//过宽
-            scaleBase = getImageViewWidth() / rect.width();
-        } else {
-            scaleBase = getImageViewHeight() / rect.height();
-        }
-
-        mSuppMatrix.setScale(scaleBase, scaleBase);
-        setImageMatrix(getDrawMatrix());
-
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        super.onLayout(changed, left, top, right, bottom);
-        if (changed) {
-            initOnLayout();
-        }
-    }
-
-    /**
-     * Resets the Matrix back to FIT_CENTER, and then displays it.s
-     */
-    private void resetMatrix() {
-        mSuppMatrix.reset();
-        setImageMatrix(getDrawMatrix());
-        checkMatrixBounds();
-    }
-
-    protected static final int EDGE_NONE = -1;
-    protected static final int EDGE_LEFT = 0;
-    protected static final int EDGE_RIGHT = 1;
-    protected static final int EDGE_BOTH = 2;
-    protected int mScrollEdge = EDGE_BOTH;
-    private ScaleType mScaleType = ScaleType.FIT_CENTER;
-
-    protected boolean checkMatrixBounds() {
-        final RectF rect = getDisplayRect(getDrawMatrix());
-        if (null == rect) {
-            return false;
-        }
-
-        final float height = rect.height(), width = rect.width();
-        float deltaX = 0, deltaY = 0;
-
-        final int viewHeight = getImageViewHeight();
-        if (height <= viewHeight) {
-            switch (mScaleType) {
-                case FIT_START:
-                    deltaY = -rect.top;
-                    break;
-                case FIT_END:
-                    deltaY = viewHeight - height - rect.top;
-                    break;
-                default:
-                    deltaY = (viewHeight - height) / 2 - rect.top;
-                    break;
-            }
-        } else if (rect.top > 0) {
-            deltaY = -rect.top;
-        } else if (rect.bottom < viewHeight) {
-            deltaY = viewHeight - rect.bottom;
-        }
-
-        final int viewWidth = getImageViewWidth();
-        if (width <= viewWidth) {
-            switch (mScaleType) {
-                case FIT_START:
-                    deltaX = -rect.left;
-                    break;
-                case FIT_END:
-                    deltaX = viewWidth - width - rect.left;
-                    break;
-                default:
-                    deltaX = (viewWidth - width) / 2 - rect.left;
-                    break;
-            }
-            mScrollEdge = EDGE_BOTH;
-        } else if (rect.left > 0) {
-            mScrollEdge = EDGE_LEFT;
-            deltaX = -rect.left;
-        } else if (rect.right < viewWidth) {
-            deltaX = viewWidth - rect.right;
-            mScrollEdge = EDGE_RIGHT;
-        } else {
-            mScrollEdge = EDGE_NONE;
-        }
-
-        // Finally actually translate the matrix
-        mSuppMatrix.postTranslate(deltaX, deltaY);
-        return true;
-    }
-
-
-    protected int getImageViewWidth() {
-        return getWidth() - getPaddingLeft() - getPaddingRight();
-    }
-
-    protected int getImageViewHeight() {
-        return getHeight() - getPaddingTop() - getPaddingBottom();
-    }
-
-
-    public RectF getDisplayRect() {
-        return getDisplayRect(getDrawMatrix());
-    }
-
-    /**
-     * Helper method that maps the supplied Matrix to the current Drawable
-     *
-     * @param matrix - Matrix to map Drawable against
-     * @return RectF - Displayed Rectangle
-     */
-    protected RectF getDisplayRect(Matrix matrix) {
-        Drawable d = getDrawable();
-        if (null != d) {
-            mDisplayRect.set(0, 0, d.getIntrinsicWidth(),
-                    d.getIntrinsicHeight());
-            matrix.mapRect(mDisplayRect);
-            return mDisplayRect;
-        }
-        return null;
-    }
-
-    public Matrix getDrawMatrix() {
-        mDrawMatrix.set(mBaseMatrix);
-        mDrawMatrix.postConcat(mSuppMatrix);
-        return mDrawMatrix;
-    }
-
     @Override
     public void setImageURI(Uri uri) {
         super.setImageURI(uri);
     }
-
-    protected PointF currentPoint = new PointF();
-    private int mActionMode = 0;
-    private static final int ACTION_MODE_NONE = 0;
-    private static final int ACTION_MODE_DRAG = 1;
-    private static final int ACTION_MODE_ZOOM = 2;
-    private float startDis;// 开始距离
-    private double lastFingerAngle;// 开始角度
-    private double currentFingerAngle;// 开始角度
-    private long FLOAT_TIME = 500; // 0.5s
-    float currentScale = 1.0f;
-
-    StateRunnable mStateRunnable = null;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -368,16 +333,201 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         return handled;
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasWindowFocus) {
+        super.onWindowFocusChanged(hasWindowFocus);
+        if (!hasWindowFocus) {
+            if (frameLayoutTop != null) {
+                windowManager.removeView(frameLayoutTop);
+                frameLayoutTop.destroyDrawingCache();
+                frameLayoutTop = null;
+                setVisibility(VISIBLE);
+                mState = STATE_NORMAL;
+                mActionMode = ACTION_MODE_NONE;
+            }
+        }
+    }
+
+    @Override
+    public void onAnimated() {
+        if (mState == STATE_BACKING) {
+            remove_top_shower();
+            setVisibility(VISIBLE);
+            KCTopestHookLayer.getFactory(getContext()).unhook();
+            mState = STATE_NORMAL;
+        }
+    }
+
+    @Override
+    public void onGlobalLayout() {
+        Drawable drawable = getDrawable();
+        if (null == drawable) {
+            return;
+        }
+        final int top = getTop();
+        final int right = getRight();
+        final int bottom = getBottom();
+        final int left = getLeft();
+
+        /**
+         * We need to check whether the ImageView's bounds have changed.
+         * This would be easier if we targeted API 11+ as we could just use
+         * View.OnLayoutChangeListener. Instead we have to replicate the
+         * work, keeping track of the ImageView's bounds and then checking
+         * if the values change.
+         */
+        if (top != mIvTop || bottom != mIvBottom || left != mIvLeft
+                || right != mIvRight) {
+            // Update our base matrix, as the bounds have changed
+            updateBaseMatrix(getDrawable());
+
+            // Update values as something has changed
+            mIvTop = top;
+            mIvRight = right;
+            mIvBottom = bottom;
+            mIvLeft = left;
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        if (changed) {
+            initOnLayout();
+        }
+    }
+
+    protected boolean checkMatrixBounds() {
+        final RectF rect = getDisplayRect(getDrawMatrix());
+        if (null == rect) {
+            return false;
+        }
+
+        final float height = rect.height(), width = rect.width();
+        float deltaX = 0, deltaY = 0;
+
+        final int viewHeight = getImageViewHeight();
+        if (height <= viewHeight) {
+            switch (mScaleType) {
+                case FIT_START:
+                    deltaY = -rect.top;
+                    break;
+                case FIT_END:
+                    deltaY = viewHeight - height - rect.top;
+                    break;
+                default:
+                    deltaY = (viewHeight - height) / 2 - rect.top;
+                    break;
+            }
+        } else if (rect.top > 0) {
+            deltaY = -rect.top;
+        } else if (rect.bottom < viewHeight) {
+            deltaY = viewHeight - rect.bottom;
+        }
+
+        final int viewWidth = getImageViewWidth();
+        if (width <= viewWidth) {
+            switch (mScaleType) {
+                case FIT_START:
+                    deltaX = -rect.left;
+                    break;
+                case FIT_END:
+                    deltaX = viewWidth - width - rect.left;
+                    break;
+                default:
+                    deltaX = (viewWidth - width) / 2 - rect.left;
+                    break;
+            }
+            mScrollEdge = EDGE_BOTH;
+        } else if (rect.left > 0) {
+            mScrollEdge = EDGE_LEFT;
+            deltaX = -rect.left;
+        } else if (rect.right < viewWidth) {
+            deltaX = viewWidth - rect.right;
+            mScrollEdge = EDGE_RIGHT;
+        } else {
+            mScrollEdge = EDGE_NONE;
+        }
+
+        // Finally actually translate the matrix
+        mSuppMatrix.postTranslate(deltaX, deltaY);
+        return true;
+    }
+
+    protected int getImageViewWidth() {
+        return getWidth() - getPaddingLeft() - getPaddingRight();
+    }
+
+    protected int getImageViewHeight() {
+        return getHeight() - getPaddingTop() - getPaddingBottom();
+    }
+
+    /**
+     * Helper method that maps the supplied Matrix to the current Drawable
+     *
+     * @param matrix - Matrix to map Drawable against
+     * @return RectF - Displayed Rectangle
+     */
+    protected RectF getDisplayRect(Matrix matrix) {
+        Drawable d = getDrawable();
+        if (null != d) {
+            mDisplayRect.set(0, 0, d.getIntrinsicWidth(),
+                    d.getIntrinsicHeight());
+            matrix.mapRect(mDisplayRect);
+            return mDisplayRect;
+        }
+        return null;
+    }
+
+    private void init(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
+        windowManager = (WindowManager) context.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+        ViewTreeObserver observer = getViewTreeObserver();
+        if (null != observer)
+            observer.addOnGlobalLayoutListener(this);
+        if (null != mPendingScaleType) {
+            setScaleType(mPendingScaleType);
+            mPendingScaleType = null;
+        }
+    }
+
+    private void initMatrix() {
+        resetMatrix();
+        setImageViewScaleTypeMatrix(this);
+    }
+
+    private void initOnLayout() {
+        RectF rect = getDisplayRect();
+        if (rect == null)
+            return;
+        if (rect.width() * getImageViewHeight() > rect.height() * getImageViewWidth()) {//过宽
+            scaleBase = getImageViewWidth() / rect.width();
+        } else {
+            scaleBase = getImageViewHeight() / rect.height();
+        }
+
+        mSuppMatrix.setScale(scaleBase, scaleBase);
+        setImageMatrix(getDrawMatrix());
+
+    }
+
+    /**
+     * Resets the Matrix back to FIT_CENTER, and then displays it.s
+     */
+    private void resetMatrix() {
+        mSuppMatrix.reset();
+        setImageMatrix(getDrawMatrix());
+        checkMatrixBounds();
+    }
+
     private void initDrag(MotionEvent event) {
         if (is_first_pointer_up(event)) {
             currentPoint.set(event.getX(1), event.getY(1));
         } else {
             currentPoint.set(event.getX(), event.getY());
         }
-    }
-
-    public static boolean is_first_pointer_up(MotionEvent event) {
-        return ((event.getAction() >> (8 * 0)) & 0x0f) == 6 && ((event.getAction() >> (8 * 1)) & 0x0f) == 0;
     }
 
     private void initZoom(MotionEvent event) {
@@ -387,32 +537,6 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         currentFingerAngle = lastFingerAngle;
         currentPoint = mid(event);
         currentScale = imageViewTop.getScale();
-    }
-
-    /**
-     * 计算两点之间的中间点
-     *
-     * @param event
-     * @return
-     */
-    public static PointF mid(View view, MotionEvent event) {
-        int[] location = new int[2];
-        view.getLocationOnScreen(location);
-        float midX = (event.getX(1) + event.getX(0)) / 2 + location[0];
-        float midY = (event.getY(1) + event.getY(0)) / 2 + location[1];
-        return new PointF(midX, midY);
-    }
-
-    public static PointF mid(PointF currentPoint, MotionEvent event) {
-        float x = (event.getX(1) + currentPoint.x) / 2;
-        float y = (event.getY(1) + currentPoint.y) / 2;
-        return new PointF(x, y);
-    }
-
-    public static PointF mid(MotionEvent event) {
-        float x = (event.getX(1) + event.getX(0)) / 2;
-        float y = (event.getY(1) + event.getY(0)) / 2;
-        return new PointF(x, y);
     }
 
     private void move(MotionEvent event) {
@@ -427,45 +551,12 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         imageViewTop.setTranslate(vector.x, vector.y);
     }
 
-    long mStartOpen = 0;
-
-    public void open() {
-        mState = STATE_OPENING;
-        imageViewTop.setAnimatedTranslateListener(new OnAnimatedListener() {
-            @Override
-            public void onAnimated() {
-//                open_full_screen();
-                imageViewTop.setAnimatedTranslateListener(KCExtraImageView.this);
-                mState = STATE_FULLSCREEN;
-            }
-        });
-        mStartOpen = System.currentTimeMillis();
-
-        imageViewTop.to_fullscreen();
-    }
-
-    public int getState() {
-        return mState;
-    }
-
-    public void fall() {
-        anime_to_original();
-        KCTopestHookLayer.getFactory(getContext()).unhook();
-    }
-
     private void anime_to_original() {
         mState = STATE_BACKING;
         imageViewTop.moveToOrigin();
         imageViewTop.rotationToOrigin(true);
         imageViewTop.setScale(scaleBase, true);
     }
-
-    private int mState = 0;
-    public static final int STATE_NORMAL = 0;
-    public static final int STATE_SUSPENDED = 1;
-    public static final int STATE_FULLSCREEN = 2;
-    public static final int STATE_OPENING = 3;
-    public static final int STATE_BACKING = 4;
 
     private void suspend() {
         mState = STATE_SUSPENDED;
@@ -479,9 +570,6 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         setVisibility(INVISIBLE);
         KCTopestHookLayer.getFactory(getContext()).hook(this);
     }
-
-    FrameLayout frameLayoutTop = null;
-    KCExtraImageViewTopShower imageViewTop;
 
     private void create_top_shower(int state) {
         initTopestShower();
@@ -528,8 +616,6 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         windowManager.addView(frameLayoutTop, wmParams);
         imageViewTop.setParent(frameLayoutTop);
     }
-
-    float mToperShowerScale;
 
     private void initTopShowerLocationAndScale(int leftImageView, int topImageView) {
         RectF rectTop = imageViewTop.getDisplayRect();
@@ -587,84 +673,12 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         return get_actionbar_height(getContext());
     }
 
-    public static int get_statusbar_height(Context context) {
-        Class c;
-        try {
-            c =
-                    Class.forName("com.android.internal.R$dimen");
-            Object obj = c.newInstance();
-            Field field = c.getField("status_bar_height");
-            int x = Integer.parseInt(field.get(obj).toString());
-            int y = context.getResources().getDimensionPixelSize(x);
-            return y;
-        } catch (Exception e) {
-        }
-        return 0;
-    }
-
-    public static int get_actionbar_height(Context context) {
-        TypedValue tv = new TypedValue();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            if (context.getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true))
-                return TypedValue.complexToDimensionPixelSize(tv.data, context.getResources().getDisplayMetrics());
-//        } else if (imageView.getContext().getTheme().resolveAttribute(com.actionbarsherlock.R.attr.actionBarSize, tv, true)) {
-//            actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, imageView.getContext().getResources().getDisplayMetrics());
-        }
-        return 0;
-    }
-
-    @Override
-    public void onAnimated() {
-        if (mState == STATE_BACKING) {
-            remove_top_shower();
-            setVisibility(VISIBLE);
-            KCTopestHookLayer.getFactory(getContext()).unhook();
-            mState = STATE_NORMAL;
-        }
-    }
-
     private void remove_top_shower() {
         frameLayoutTop.removeView(imageViewTop);
         windowManager.removeView(frameLayoutTop);
         imageViewTop = null;
         frameLayoutTop = null;
     }
-
-    private int mIvTop, mIvRight, mIvBottom, mIvLeft;
-
-    @Override
-    public void onGlobalLayout() {
-        Drawable drawable = getDrawable();
-        if (null == drawable) {
-            return;
-        }
-        final int top = getTop();
-        final int right = getRight();
-        final int bottom = getBottom();
-        final int left = getLeft();
-
-        /**
-         * We need to check whether the ImageView's bounds have changed.
-         * This would be easier if we targeted API 11+ as we could just use
-         * View.OnLayoutChangeListener. Instead we have to replicate the
-         * work, keeping track of the ImageView's bounds and then checking
-         * if the values change.
-         */
-        if (top != mIvTop || bottom != mIvBottom || left != mIvLeft
-                || right != mIvRight) {
-            // Update our base matrix, as the bounds have changed
-            updateBaseMatrix(getDrawable());
-
-            // Update values as something has changed
-            mIvTop = top;
-            mIvRight = right;
-            mIvBottom = bottom;
-            mIvLeft = left;
-        }
-    }
-
-
-//    float locationTopFix = 0, locationLeftFix = 0;
 
     /**
      * Calculate Matrix for FIT_CENTER
@@ -728,20 +742,23 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         resetMatrix();
     }
 
+
+//    float locationTopFix = 0, locationLeftFix = 0;
+
     public class StateRunnable implements Runnable {
 
-        private boolean running = true;
         private final long mStartTime;
         private final long mDuration;
         boolean done = false;
-
-        public void stop() {
-            this.running = false;
-        }
+        private boolean running = true;
 
         public StateRunnable(final long millisecond) {
             mStartTime = System.currentTimeMillis();
             mDuration = millisecond;
+        }
+
+        public void stop() {
+            this.running = false;
         }
 
         @Override
@@ -766,26 +783,4 @@ public class KCExtraImageView extends ImageView implements OnAnimatedListener,
         }
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasWindowFocus) {
-        super.onWindowFocusChanged(hasWindowFocus);
-        if (!hasWindowFocus) {
-            if (frameLayoutTop != null) {
-                windowManager.removeView(frameLayoutTop);
-                frameLayoutTop.destroyDrawingCache();
-                frameLayoutTop = null;
-                setVisibility(VISIBLE);
-                mState = STATE_NORMAL;
-                mActionMode = ACTION_MODE_NONE;
-            }
-        }
-    }
-
-    public int getDuration() {
-        return imageViewTop.DURATION;
-    }
-
-    public void setDuration(int Duration) {
-        imageViewTop.DURATION = Duration;
-    }
 }

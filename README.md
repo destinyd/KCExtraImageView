@@ -13,15 +13,6 @@ Android KCExtraImageView
 ```
 
 ###需求所需要方法说明
-实例方法
-```
-public void set_drawable(Drawable drawable);
-```
-请直接使用
-```
-public void setImageDrawable(Drawable drawable);
-```
-
 ```
 public void setDuration(int Duration){}
 ```

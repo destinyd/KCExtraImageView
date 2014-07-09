@@ -21,6 +21,13 @@ import static com.github.destinyd.kcextraimageview.KCExtraImageView.get_statusba
  */
 public class KCTopestHookLayer extends FrameLayout {
     private static final String TAG = "KCTopestHookLayer";
+    static WindowManager _windowManager = null;
+    static KCTopestHookLayer _factory = null;
+    ArrayList<View> views = new ArrayList<View>();
+    View hookView = null;
+    Activity activity;
+    Rect outRect = new Rect();
+    int[] location = new int[2];
     private boolean working = false;
 
     public KCTopestHookLayer(Context context) {
@@ -34,101 +41,6 @@ public class KCTopestHookLayer extends FrameLayout {
     public KCTopestHookLayer(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
-
-    public void work() {
-        working = true;
-    }
-
-    public void hook(KCExtraImageView view) {
-        hookView = view;
-    }
-
-    public void unhook() {
-        hookView = null;
-    }
-
-    ArrayList<View> views = new ArrayList<View>();
-    View hookView = null;
-    Activity activity;
-
-    public void addHookView(View view) {
-        views.add(view);
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        event.offsetLocation(0.0f, get_statusbar_height(getContext()));
-        if (working) {
-            if (hookView != null) {
-                hookView.dispatchTouchEvent(event);
-                return true;
-            }
-            Iterator<View> iterator = views.iterator();
-            while (iterator.hasNext()) {
-                View view = iterator.next();
-                if (isViewContains(
-                        view,
-                        (int) event.getX(),
-                        (int) event.getY())) {
-                    boolean result = view.dispatchTouchEvent(event);
-                    if (result) {
-                        hookView = (KCExtraImageView) view;
-                        return true;
-                    }
-                }
-            }
-        }
-
-        boolean b = activity.dispatchTouchEvent(event);
-        return b;
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (working) {
-            if (hookView != null) {
-                return hookView.onTouchEvent(event);
-            }
-//            return false;
-        }
-
-        boolean b = activity.onTouchEvent(event);
-        Log.d(TAG, "onTouchEvent:" + b);
-        return b;
-    }
-
-    Rect outRect = new Rect();
-    int[] location = new int[2];
-
-    private boolean isViewContains(View view, int rx, int ry) {
-        int[] l = new int[2];
-        view.getLocationOnScreen(l);
-        int x = l[0];
-        int y = l[1];
-        int w = view.getWidth();
-        int h = view.getHeight();
-
-        if (rx < x || rx > x + w || ry < y || ry > y + h) {
-            return false;
-        }
-        return true;
-    }
-
-    private boolean testViewContains(View v, int rx, int ry) {
-        Rect rect = new Rect(v.getLeft(), v.getTop(), v.getRight(), v.getBottom());
-        return rect.contains(v.getLeft() + (int) rx, v.getTop() + (int) ry);
-    }
-
-    public Activity getActivity() {
-        return activity;
-    }
-
-    static WindowManager _windowManager = null;
-    static KCTopestHookLayer _factory = null;
 
     static public KCTopestHookLayer getFactory(Context context) {
         if (_factory == null)
@@ -194,4 +106,89 @@ public class KCTopestHookLayer extends FrameLayout {
 
         return wmParams;
     }
+
+    public void work() {
+        working = true;
+    }
+
+    public void hook(KCExtraImageView view) {
+        hookView = view;
+    }
+
+    public void unhook() {
+        hookView = null;
+    }
+
+    public void addHookView(View view) {
+        views.add(view);
+    }
+
+    public Activity getActivity() {
+        return activity;
+    }
+
+    public void setActivity(Activity activity) {
+        this.activity = activity;
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        event.offsetLocation(0.0f, get_statusbar_height(getContext()));
+        if (working) {
+            if (hookView != null) {
+                hookView.dispatchTouchEvent(event);
+                return true;
+            }
+            Iterator<View> iterator = views.iterator();
+            while (iterator.hasNext()) {
+                View view = iterator.next();
+                if (isViewContains(
+                        view,
+                        (int) event.getX(),
+                        (int) event.getY())) {
+                    boolean result = view.dispatchTouchEvent(event);
+                    if (result) {
+                        hookView = (KCExtraImageView) view;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        boolean b = activity.dispatchTouchEvent(event);
+        return b;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (working) {
+            if (hookView != null) {
+                return hookView.onTouchEvent(event);
+            }
+//            return false;
+        }
+
+        boolean b = activity.onTouchEvent(event);
+        Log.d(TAG, "onTouchEvent:" + b);
+        return b;
+    }
+
+    private boolean isViewContains(View view, int rx, int ry) {
+        int[] l = new int[2];
+        view.getLocationOnScreen(l);
+        int x = l[0];
+        int y = l[1];
+        int w = view.getWidth();
+        int h = view.getHeight();
+
+        if (rx < x || rx > x + w || ry < y || ry > y + h) {
+            return false;
+        }
+        return true;
+    }
+//
+//    private boolean testViewContains(View v, int rx, int ry) {
+//        Rect rect = new Rect(v.getLeft(), v.getTop(), v.getRight(), v.getBottom());
+//        return rect.contains(v.getLeft() + (int) rx, v.getTop() + (int) ry);
+//    }
 }
